@@ -40,7 +40,7 @@ class Solver(object):
         if not self.finetune:
             self.model.apply(weights_init)
 
-    def train(self, settings: SettingsTraining):
+    def train(self, trial, settings: SettingsTraining):
         manual_seed(0)
         log_val_epoch = True
         if log_val_epoch:
@@ -63,6 +63,7 @@ class Solver(object):
         print("Model loaded")
 
         epochs = tqdm(range(settings.epochs), desc="epochs", disable=False)
+        val_loss = 0
         for epoch in epochs:
             print(f'epoch: {epoch}')
             try:
@@ -78,6 +79,9 @@ class Solver(object):
                 # Validation
                 self.model.eval()
                 val_epoch_loss = self.run_epoch(self.val_dataloader, device)
+                val_loss += val_epoch_loss 
+
+                trial.report(val_epoch_loss, epoch)
 
                 # Logging
                 writer.add_scalar("train_loss", train_epoch_loss, epoch)
@@ -138,6 +142,8 @@ class Solver(object):
 
         if log_val_epoch:
             file.close()
+
+        return val_loss / len(epochs)
     
     def plot_inputs_and_labels(self, inputs,label):
         """ plot examplary input and label"""

@@ -6,6 +6,7 @@ import time
 import torch
 import yaml
 import pathlib
+import utils.utils as ut
 from torch.utils.data import DataLoader, random_split, Subset
 from torch.utils.data.sampler import BatchSampler, RandomSampler, SequentialSampler
 from torch.nn import MSELoss, L1Loss
@@ -21,19 +22,17 @@ from preprocessing.prepare import prepare_data_and_paths
 from postprocessing.visualization import plot_avg_error_cellwise, visualizations, infer_all_and_summed_pic, visualizations_convLSTM
 from postprocessing.measurements import measure_loss, save_all_measurements
 
+def read_cla(model_path:str):
+    clas = ut.load_yaml(model_path / "command_line_arguments.yaml")
+    for path_typed_cla in ["data_prep", "data_raw", "destination", "model"]:
+        if clas[path_typed_cla] is not None:
+            clas[path_typed_cla] = pathlib.Path(clas[path_typed_cla])
+
+    return clas
+
 def init_data(settings: SettingsTraining, seed=1):
-    if settings.problem == "2stages":
-        dataset = SimulationDataset(settings.dataset_prep)
-    elif settings.problem == "extend1":
-        dataset = DatasetExtend1(settings.dataset_prep, box_size=settings.len_box)
-    elif settings.problem == "extend2":
-        if settings.case == 'test':
-            settings.skip_per_dir = 64
-        if settings.net == "convLSTM":
-            dataset = DatasetExtendConvLSTM(settings.dataset_prep, prev_steps=settings.prev_boxes, extend=settings.extend , skip_per_dir=settings.skip_per_dir, overfit=settings.overfit)
-        else:
-            dataset = DatasetExtend2(settings.dataset_prep, box_size=settings.len_box, skip_per_dir=settings.skip_per_dir)
-        settings.inputs += "T"
+    dataset = DatasetExtendConvLSTM(settings.dataset_prep, prev_steps=settings.prev_boxes, extend=settings.extend , skip_per_dir=settings.skip_per_dir, overfit=settings.overfit)
+    settings.inputs += "T"
     print(f"Length of dataset: {len(dataset)}")
     generator = torch.Generator().manual_seed(seed)
 
@@ -73,7 +72,13 @@ def run(settings: SettingsTraining):
     elif settings.problem in ["extend1", "extend2"]:
         if settings.net == "convLSTM":
             
-            model = Seq2Seq(num_channels=input_channels, frame_size=(64,64), prev_boxes = settings.prev_boxes, extend=settings.extend, num_layers=settings.nr_layers).float()
+            model = Seq2Seq(num_channels=3, frame_size=(64,64), prev_boxes = settings.prev_boxes, 
+                            extend=settings.extend, 
+                            num_kernels=settings.num_layers,
+                            enc_conv_features=settings.enc_conv_features,
+                            enc_kernel_sizes=settings.enc_kernel_sizes,
+                            dec_kernel_sizes=settings.dec_kernel_sizes,
+                            activation=settings.activation).float()
         else:
             model = UNetHalfPad(in_channels=input_channels).float()
     if settings.case in ["test", "finetune"]:
@@ -140,7 +145,12 @@ def save_inference(model_name:str, in_channels: int, settings: SettingsTraining)
         model = UNet(in_channels=in_channels).float()
     elif settings.problem in ["extend1", "extend2"]:
         if settings.net == "convLSTM":
-            model = Seq2Seq(num_channels=3, frame_size=(64,64), prev_boxes = settings.prev_boxes, extend=settings.extend, num_kernels=settings.num_layers).float()
+            model = Seq2Seq(num_channels=3, frame_size=(64,64), prev_boxes = settings.prev_boxes, 
+                            extend=settings.extend, 
+                            num_kernels=settings.num_layers,
+                            enc_conv_features=settings.enc_conv_features,
+                            enc_kernel_sizes=settings.enc_kernel_sizes,
+                            dec_kernel_sizes=settings.dec_kernel_sizes).float()
         else:
             model = UNetHalfPad(in_channels=in_channels).float()
     model.load(model_name, settings.device)
@@ -188,8 +198,13 @@ if __name__ == "__main__":
     parser.add_argument("--prev_boxes", type=int, default=1)
     parser.add_argument("--extend", type=int, default=2)
     parser.add_argument("--overfit", type=int, default=0)
-    parser.add_argument("--nr_layers", type=int, default=1)
+    parser.add_argument("--num_layers", type=int, default=1)
     parser.add_argument("--loss", type=str, choices=['mse', 'l1'], default='mse')
+    parser.add_argument("--enc_conv_features", type=[], default=[16, 32, 64, 64, 64])
+    parser.add_argument("--dec_conv_features", type=[], default=[64, 64, 64])
+    parser.add_argument("--enc_kernel_sizes", type=[], default = [7, 5, 5, 5, 5])
+    parser.add_argument("--dec_kernel_sizes", type=[], default=[5, 5, 7])
+    parser.add_argument("--activation", type=str, default="relu")
     args = parser.parse_args()
     settings = SettingsTraining(**vars(args))
 

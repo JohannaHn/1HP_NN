@@ -2,6 +2,9 @@ import os
 from pynvml import *
 import re
 from typing import List
+import yaml
+from pathlib import Path
+
 
 def sizeof_fmt(num, suffix="B"):
     for unit in ["", "Ki", "Mi", "Gi", "Ti", "Pi", "Ei", "Zi"]:
@@ -31,3 +34,11 @@ def re_split_number_text(input: str) -> List:
     if match:
         items = match.groups()
     return items
+
+def load_yaml(path: Path, **kwargs) -> dict:
+    with open(path, "r") as file:
+        try:
+            args = yaml.safe_load(file, **kwargs)
+        except:
+            args = yaml.load(file, **kwargs)
+    return args

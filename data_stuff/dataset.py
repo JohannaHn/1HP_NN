@@ -144,7 +144,7 @@ class DatasetExtend2(Dataset):
         return idx // self.dp_per_run, idx % self.dp_per_run + 1 #depends on which box is taken (front or last)
     
 class DatasetExtendConvLSTM(Dataset):
-    def __init__(self, path:str, prev_steps:int, extend:int, skip_per_dir:int, overfit:int):
+    def __init__(self, path:str, prev_steps:int, extend:int, skip_per_dir:int, overfit:int=0):
         Dataset.__init__(self)
         self.path = pathlib.Path(path)
         self.info = self.__load_info()
