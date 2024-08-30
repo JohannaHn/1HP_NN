@@ -119,7 +119,7 @@ def save_all_measurements(settings:SettingsTraining, len_dataset, times, solver:
     print(f"Measurements saved")
 
 
-def measure_losses_paper24(model: Seq2Seq, dataloaders: Dict[str, DataLoader], args: dict, vT_case: str = "temperature"):
+def measure_losses_paper24(model: Seq2Seq, dataloaders: Dict[str, DataLoader], settings:SettingsTraining, vT_case: str = "temperature"):
     '''
     function to measure the losses for the paper24
     ATTENTION! not robust, expects vT-case to be "temperature" or "velocities" and
@@ -129,13 +129,10 @@ def measure_losses_paper24(model: Seq2Seq, dataloaders: Dict[str, DataLoader], a
     if vT_case == "temperature":
         pbt_threshold = [0.1] # [°C] # only relevant for temperature
     
-    device = args["device"]
-    if args["problem"] == "allin1":
-        norm = dataloaders["train"].dataset.norm
-        output_channels = dataloaders["train"].dataset.output_channels
-    elif args["problem"] in ["1hp", "2stages"]:
-        norm = dataloaders["train"].dataset.dataset.norm
-        output_channels = dataloaders["train"].dataset.dataset.output_channels
+    device = settings.device
+    
+    norm = dataloaders["train"].dataset.dataset.norm
+    output_channels = dataloaders["train"].dataset.dataset.output_channels
     model.eval()
     results = {}
 

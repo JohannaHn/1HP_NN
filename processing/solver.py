@@ -5,6 +5,7 @@ import time
 from dataclasses import dataclass
 import matplotlib.pyplot as plt
 import torch
+import optuna
 
 from torch.nn import Module, MSELoss, modules, L1Loss
 from torch.optim import Adam, Optimizer
@@ -83,6 +84,9 @@ class Solver(object):
 
                 trial.report(val_epoch_loss, epoch)
 
+                if trial.should_prune():
+                    raise optuna.exceptions.TrialPruned()
+
                 # Logging
                 writer.add_scalar("train_loss", train_epoch_loss, epoch)
                 writer.add_scalar("val_loss", val_epoch_loss, epoch)
@@ -109,7 +113,7 @@ class Solver(object):
                     self.model.save(settings.destination)
 
                 if log_val_epoch:
-                    if epoch in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 2000, 5000, 10000, 15000, 20000, 24999]:
+                    if epoch in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150]:
                         csv_writer.writerow([epoch, val_epoch_loss, train_epoch_loss])
                         csv_writer_best.writerow([epoch, self.best_model_params["loss"], self.best_model_params["train loss"]])
                         file.flush()
@@ -190,8 +194,6 @@ class Solver(object):
 
         
         return epoch_loss
-    
-    
 
     def save_lr_schedule(self, path: str):
         """ save learning rate history to csv file"""
@@ -213,3 +215,19 @@ class Solver(object):
             for line in f:
                 epoch, lr = line.split(",")
                 self.lr_schedule[int(epoch)] = float(lr)
+
+    def save_metrics(self, destination: pathlib.Path, no_params:int, max_epochs:int, training_time:float, device: str = "cpu"):
+        csv_file = open(destination.parent / "measurements_all_metrics.csv", "a")
+        # no. parameters, max. epochs, training time
+        csv_writer = csv.writer(csv_file)
+
+        self.model.eval()
+        train_epoch_loss = self.run_epoch(self.train_dataloader, device)
+        val_epoch_loss = self.run_epoch(self.val_dataloader, device)
+
+        print(destination.name, self.best_model_params["epoch"], train_epoch_loss, val_epoch_loss)
+        row = [destination.name, self.best_model_params["epoch"], train_epoch_loss, val_epoch_loss]
+        row.extend([no_params, max_epochs, training_time])
+                
+        csv_writer.writerow(row)
+        csv_file.close()

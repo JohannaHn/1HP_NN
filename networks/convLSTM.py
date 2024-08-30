@@ -184,10 +184,6 @@ class Seq2Seq(nn.Module):
     
         super(Seq2Seq, self).__init__()
 
-        assert len(enc_kernel_sizes) == 5
-        assert len(enc_conv_features) == 5
-        assert len(dec_conv_features) == 3
-        assert len(dec_kernel_sizes) == 3
         assert enc_conv_features[-1] == dec_conv_features[0]
 
         self.sequential = nn.Sequential()
@@ -278,6 +274,9 @@ class Seq2Seq(nn.Module):
     def load(self, model_path:pathlib.Path, device:str = "cpu", model_name: str = "model.pt"):
         self.load_state_dict(load(model_path/model_name))
         self.to(device)
+
+    def num_of_params(self):
+        return sum(p.numel() for p in self.parameters() if p.requires_grad)
 
     
 def weights_init(m):

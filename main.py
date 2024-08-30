@@ -30,7 +30,7 @@ def read_cla(model_path:str):
 
     return clas
 
-def init_data(settings: SettingsTraining, seed=1):
+def init_data(settings: SettingsTraining, batch_size:int, seed=1 ):
     dataset = DatasetExtendConvLSTM(settings.dataset_prep, prev_steps=settings.prev_boxes, extend=settings.extend , skip_per_dir=settings.skip_per_dir, overfit=settings.overfit)
     settings.inputs += "T"
     print(f"Length of dataset: {len(dataset)}")
@@ -40,9 +40,6 @@ def init_data(settings: SettingsTraining, seed=1):
     
     split1, split2, split3 = get_splits(len(dataset), split_ratios)
     datasets = []
-    print(split1)
-    print(split2)
-    print(split3)
 
     datasets.append(Subset(dataset, range(split3+split2,len(dataset))))
     datasets.append(Subset(dataset, range(split3,split3+split2)))
@@ -50,8 +47,8 @@ def init_data(settings: SettingsTraining, seed=1):
     dataloaders = {}
     torch.manual_seed(2809)
     try:
-        dataloaders["train"] = DataLoader(datasets[0], batch_size=50, shuffle=True, num_workers=0)
-        dataloaders["val"] = DataLoader(datasets[1], batch_size=50, shuffle=True, num_workers=0)
+        dataloaders["train"] = DataLoader(datasets[0], batch_size=batch_size, shuffle=True, num_workers=0)
+        dataloaders["val"] = DataLoader(datasets[1], batch_size=batch_size, shuffle=True, num_workers=0)
     except: pass
     dataloaders["test"] = DataLoader(datasets[2], batch_size=10, shuffle=False, num_workers=0)
 
