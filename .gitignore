@@ -1,6 +1,17 @@
 paths.yaml
 paths_sdf.yaml
 
+#bash scripts
+*.sh
+
+#databases
+*.db
+
+second.db
+
+#text files
+*.txt
+
 datasets_prepared/
 nerf/
 WIP_rnn/
@@ -165,3 +176,11 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+/cnn model
+
+#models
+.pt
+
+second.db
+second.db
