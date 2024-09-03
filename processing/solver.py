@@ -92,8 +92,7 @@ class Solver(object):
                 writer.add_scalar("val_loss", val_epoch_loss, epoch)
                 writer.add_scalar(
                     "learning_rate", self.opt.param_groups[0]["lr"], epoch)
-                epochs.set_postfix_str(
-                    f"train loss: {train_epoch_loss:.2e}, val loss: {val_epoch_loss:.2e}, lr: {self.opt.param_groups[0]['lr']:.1e}")
+                epochs.set_postfix_str(f"train loss: {train_epoch_loss:.2e}, val loss: {val_epoch_loss:.2e}, lr: {self.opt.param_groups[0]['lr']:.1e}")
                 
                 # Keep best model
                 if self.best_model_params is None or val_epoch_loss < self.best_model_params["loss"]:

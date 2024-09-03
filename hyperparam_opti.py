@@ -12,8 +12,6 @@ import numpy as np
 
 import os
 
-os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
-
 import data_stuff.utils as utils
 import utils.utils_args as ut
 from main import init_data
@@ -31,9 +29,6 @@ def objective(trial):
     
 
     extend = 2
-
-    prev_boxes = trial.suggest_int("prev_boxes", 1, 3)
-    settings.prev_boxes = prev_boxes
     
     enc_depth = trial.suggest_int("enc_depth", 4, 7)
     dec_depth = trial.suggest_int("dec_depth", 4, 7)
@@ -42,12 +37,12 @@ def objective(trial):
     enc_kernel_sizes = [kernel_size for _ in range(enc_depth)]
     dec_kernel_sizes = [kernel_size for _ in range(dec_depth)]
     
-    init_features = trial.suggest_categorical("init_features", [16, 32, 64])
+    init_features = trial.suggest_categorical("init_features", [16, 32, 64, 128])
 
     enc_conv_features = np.array([init_features, *[64 for _ in range(enc_depth-1)]])
     dec_conv_features = [64 for _ in range(dec_depth)]
 
-    batch_size = trial.suggest_categorical("batch_size", [16, 32, 64, 128, 256])
+    batch_size = trial.suggest_categorical("batch_size", [16, 32])
 
     lr = trial.suggest_float("lr", 1e-5, 1e-1, log=True)
 
@@ -57,11 +52,11 @@ def objective(trial):
     # Generate the model.
     activation = trial.suggest_categorical("activation", ["relu", "tanh", "sigmoid"]) #practical reasoning: dont allow negative values (Leaky ReLU)
 
-    num_layers = trial.suggest_categorical("num_layers", [2,3,4])
+    num_layers = trial.suggest_categorical("num_layers", [2,3])
 
     # trial.suggest_categorical("prev_boxes", [1,2,3])
 
-    model = Seq2Seq(num_channels=3, frame_size=(64,64), prev_boxes =prev_boxes, 
+    model = Seq2Seq(num_channels=3, frame_size=(64,64), prev_boxes =settings.prev_boxes, 
                             extend=extend, 
                             num_layers=num_layers,
                             enc_conv_features=enc_conv_features,
@@ -71,9 +66,6 @@ def objective(trial):
                             activation=activation).float()
     model.to(settings.device)
 
-    # Generate the optimizers.
-    optimizer_name = trial.suggest_categorical("optimizer", ["Adam"]) #, "RMSprop"]) #optimized, "SGD"])
-    optimizer = getattr(optim, optimizer_name)(model.parameters(), lr=lr)
 
     # Training of the model.
     solver = Solver(model, dataloaders["train"], dataloaders["val"], loss_func=MSELoss(), learning_rate=lr)
@@ -94,7 +86,9 @@ def objective(trial):
             print(trial.params)
             raise optuna.exceptions.TrialPruned("Training failed due to CUDA out of memory.")
         else:
+            print("Caught a non-OM error")
             traceback.print_exc()
+            print(f"Training failed due to {e}")
             raise optuna.exceptions.TrialPruned(f"Training failed due to {e}")
             
     try:
@@ -111,7 +105,7 @@ if __name__ == "__main__":
     parser.add_argument("--dataset_raw", type=str, default="extend_plumes/ep_medium_1000dp_only_vary_dist", help="Name of the raw dataset (without inputs)")
     parser.add_argument("--dataset_prep", type=str, default="extend_plumes/ep_medium_1000dp_only_vary_dist inputs_ks")
     parser.add_argument("--device", type=str, default="cuda:0")
-    parser.add_argument("--epochs", type=int, default=40)
+    parser.add_argument("--epochs", type=int, default=60)
     parser.add_argument("--case", type=str, choices=["train", "test", "finetune"], default="train")
     parser.add_argument("--model", type=str, default="default") # required for testing or finetuning
     parser.add_argument("--destination", type=str, default="")
@@ -134,7 +128,7 @@ if __name__ == "__main__":
 
     settings = prepare_data_and_paths(settings)
 
-    study_name = "second"  # Unique identifier of the study.
+    study_name = "small_batch"  # Unique identifier of the study.
     storage_name = "sqlite:///{}.db".format(study_name)
    # optuna.delete_study(study_name=study_name, storage=storage_name)
     study = optuna.create_study(direction="minimize", study_name=study_name, storage=storage_name, load_if_exists=True)

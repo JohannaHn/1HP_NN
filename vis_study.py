@@ -35,7 +35,7 @@ def postprocessing(study):
 study_name = "second"  # Name of the study
 storage_url = "sqlite:///{}.db".format(study_name)  # URL of the SQLite database
 
-study = optuna.load_study(study_name=study_name, storage=f"sqlite:///{study_name}.db")
+study = optuna.load_study(study_name=study_name, storage=storage_url)
 complete_trials, failed_trials, pruned_trials = postprocessing(study)
 
 trials_below_one = trials_below(study, 1)
@@ -54,7 +54,29 @@ print(study.best_trial.value)
 print(study.best_params)
 print(study.best_value)
 
+new_study = optuna.create_study()
+
+count = 0
+for trial in study.trials:
+    if trial.params["kernel_size"] == 9 and trial.params["batch_size"] > 16:
+        count += 1
+print(f'nr of trials with kernel size 9 and batch > 16: {count}')
+
+for trial in pruned_trials.trials:
+    trial.value = 1
+    trial.state=TrialState.COMPLETE
+    new_study.add_trial(trial)
+
+new_study.add_trials(complete_trials.trials)
+
+reduced_complete = optuna.create_study()
+
+for i, trial in enumerate(complete_trials.trials, start=0):
+    if i not in [1,10]:
+        reduced_complete.add_trial(trial)
+
+
 #fig = optuna.visualization.plot_contour(study, params=["batch_size", "kernel_size","init_features","enc_depth", "dec_depth"])
 
-fig = optuna.visualization.plot_timeline(study)
+fig = optuna.visualization.plot_intermediate_values(reduced_complete)
 fig.show()
