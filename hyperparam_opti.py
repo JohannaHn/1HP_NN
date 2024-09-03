@@ -32,13 +32,13 @@ def objective(trial):
 
     extend = 2
 
-    prev_boxes = trial.suggest_categorical("prev_boxes", [1,2,3])
+    prev_boxes = trial.suggest_int("prev_boxes", 1, 3)
     settings.prev_boxes = prev_boxes
     
-    enc_depth = trial.suggest_categorical("enc_depth", [4, 5, 6, 7])
-    dec_depth = trial.suggest_categorical("dec_depth", [4, 5, 6, 7])
+    enc_depth = trial.suggest_int("enc_depth", 4, 7)
+    dec_depth = trial.suggest_int("dec_depth", 4, 7)
 
-    kernel_size = trial.suggest_categorical("kernel_size", [3, 5, 7, 9])
+    kernel_size = trial.suggest_int("kernel_size", 3, 9, step=2)
     enc_kernel_sizes = [kernel_size for _ in range(enc_depth)]
     dec_kernel_sizes = [kernel_size for _ in range(dec_depth)]
     
@@ -89,15 +89,18 @@ def objective(trial):
         dataloader = dataloaders["val"]
         #visualizations_convLSTM(model, dataloaders['test'], settings.device, prev_boxes=settings.prev_boxes, extend=settings.extend, plot_path=settings.destination, dp_to_visu=1, pic_format='png')
     except Exception as e:
-        print(f"Training failed with exception: {e}")
-        traceback.print_exc()
         loss = 1
-
+        if isinstance(e, torch.cuda.OutOfMemoryError):
+            print(trial.params)
+            raise optuna.exceptions.TrialPruned("Training failed due to CUDA out of memory.")
+        else:
+            traceback.print_exc()
+            raise optuna.exceptions.TrialPruned(f"Training failed due to {e}")
+            
     try:
         metrics = measure_losses_paper24(model, dataloaders, args)
         ut.save_yaml(metrics, f'{settings.destination}/metrics_trial_{trial.number}.yaml')
     except Exception as e:
-        traceback.print_exc()
         print("Could not measure losses")
         pass
 
@@ -108,7 +111,7 @@ if __name__ == "__main__":
     parser.add_argument("--dataset_raw", type=str, default="extend_plumes/ep_medium_1000dp_only_vary_dist", help="Name of the raw dataset (without inputs)")
     parser.add_argument("--dataset_prep", type=str, default="extend_plumes/ep_medium_1000dp_only_vary_dist inputs_ks")
     parser.add_argument("--device", type=str, default="cuda:0")
-    parser.add_argument("--epochs", type=int, default=1)
+    parser.add_argument("--epochs", type=int, default=40)
     parser.add_argument("--case", type=str, choices=["train", "test", "finetune"], default="train")
     parser.add_argument("--model", type=str, default="default") # required for testing or finetuning
     parser.add_argument("--destination", type=str, default="")
@@ -131,12 +134,12 @@ if __name__ == "__main__":
 
     settings = prepare_data_and_paths(settings)
 
-    study_name = "with_metrics"  # Unique identifier of the study.
+    study_name = "second"  # Unique identifier of the study.
     storage_name = "sqlite:///{}.db".format(study_name)
    # optuna.delete_study(study_name=study_name, storage=storage_name)
-    study = optuna.create_study(direction="minimize", study_name=study_name, storage=storage_name)
+    study = optuna.create_study(direction="minimize", study_name=study_name, storage=storage_name, load_if_exists=True)
 
-    study.optimize(objective, n_trials=25)
+    study.optimize(objective, n_trials=25, gc_after_trial=True)
 
     pruned_trials = study.get_trials(deepcopy=False, states=[TrialState.PRUNED])
     complete_trials = study.get_trials(deepcopy=False, states=[TrialState.COMPLETE])
