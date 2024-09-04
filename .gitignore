@@ -177,7 +177,7 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-/cnn model
+/cnn_model
 
 #models
 .pt
