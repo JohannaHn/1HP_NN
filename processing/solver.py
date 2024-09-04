@@ -84,8 +84,11 @@ class Solver(object):
 
                 trial.report(val_epoch_loss, epoch)
 
+                if val_epoch_loss == float("nan"):
+                    raise optuna.TrialPruned(f"Trial pruned due to nan value")
+
                 if trial.should_prune():
-                    raise optuna.exceptions.TrialPruned()
+                    raise optuna.TrialPruned(f'Trial pruned in epoch {epoch}')
 
                 # Logging
                 writer.add_scalar("train_loss", train_epoch_loss, epoch)

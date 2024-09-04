@@ -27,22 +27,28 @@ def objective(trial):
 
     utils.save_yaml(settings, settings.destination, "command_line_arguments.yaml")
     
-
     extend = 2
     
-    enc_depth = trial.suggest_int("enc_depth", 4, 7)
-    dec_depth = trial.suggest_int("dec_depth", 4, 7)
+    enc_depth = trial.suggest_int("enc_depth", 3, 7)
+    dec_depth = trial.suggest_int("dec_depth", 3, 5)
 
-    kernel_size = trial.suggest_int("kernel_size", 3, 9, step=2)
-    enc_kernel_sizes = [kernel_size for _ in range(enc_depth)]
-    dec_kernel_sizes = [kernel_size for _ in range(dec_depth)]
-    
-    init_features = trial.suggest_categorical("init_features", [16, 32, 64, 128])
+    kernel_size_start = trial.suggest_int("kernel_size", 3, 9, step=2)
 
-    enc_conv_features = np.array([init_features, *[64 for _ in range(enc_depth-1)]])
-    dec_conv_features = [64 for _ in range(dec_depth)]
+    kernel_size_evolution = trial.suggest_categorical("kernel_size_evolution", ["increasing", "decreasing"])
 
-    batch_size = trial.suggest_categorical("batch_size", [16, 32])
+    if kernel_size_evolution == "increasing":
+        enc_kernel_sizes = [kernel_size_start+2*i for i in range(enc_depth)]
+        dec_kernel_sizes = [kernel_size_start+2*i for i in range(dec_depth)]
+    if kernel_size_evolution == "decreasing":
+        enc_kernel_sizes = [max(kernel_size_start-2*i, 3) for i in range(enc_depth)]
+        dec_kernel_sizes = [max(kernel_size_start-2*i, 3) for i in range(dec_depth)]
+
+    feature_increase_start = trial.suggest_categorical("init_features", [8, 16, 32, 64, 128])
+
+    enc_conv_features = np.array([feature_increase_start, *[feature_increase_start*(2**i) for i in range(1,enc_depth)]])
+    dec_conv_features = np.array([feature_increase_start*(2**(enc_depth-1)), *[feature_increase_start*(2**(enc_depth-1-i)) for i in range(1,dec_depth-1)]])
+
+    batch_size = trial.suggest_categorical("batch_size", [8, 16])
 
     lr = trial.suggest_float("lr", 1e-5, 1e-1, log=True)
 
@@ -50,9 +56,9 @@ def objective(trial):
     _, dataloaders = init_data(settings, batch_size)
 
     # Generate the model.
-    activation = trial.suggest_categorical("activation", ["relu", "tanh", "sigmoid"]) #practical reasoning: dont allow negative values (Leaky ReLU)
+    activation = trial.suggest_categorical("activation", ["relu", "tanh"]) #practical reasoning: dont allow negative values (Leaky ReLU)
 
-    num_layers = trial.suggest_categorical("num_layers", [2,3])
+    num_layers = trial.suggest_categorical("num_layers", [2,3,4])
 
     # trial.suggest_categorical("prev_boxes", [1,2,3])
 
@@ -87,6 +93,7 @@ def objective(trial):
             raise optuna.exceptions.TrialPruned("Training failed due to CUDA out of memory.")
         else:
             print("Caught a non-OM error")
+            print(trial.params)
             traceback.print_exc()
             print(f"Training failed due to {e}")
             raise optuna.exceptions.TrialPruned(f"Training failed due to {e}")
@@ -128,7 +135,7 @@ if __name__ == "__main__":
 
     settings = prepare_data_and_paths(settings)
 
-    study_name = "small_batch"  # Unique identifier of the study.
+    study_name = "kernel_size_evolution"  # Unique identifier of the study.
     storage_name = "sqlite:///{}.db".format(study_name)
    # optuna.delete_study(study_name=study_name, storage=storage_name)
     study = optuna.create_study(direction="minimize", study_name=study_name, storage=storage_name, load_if_exists=True)
