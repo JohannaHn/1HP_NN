@@ -2,6 +2,7 @@ import optuna
 import matplotlib
 from optuna.trial import TrialState
 import scipy
+import numpy as np
 
 
 
@@ -32,51 +33,35 @@ def postprocessing(study):
 
 
 # Specify the study name and database URL
-study_name = "second"  # Name of the study
+study_name = "small_batch"  # Name of the study
 storage_url = "sqlite:///{}.db".format(study_name)  # URL of the SQLite database
+study_small_batch = optuna.load_study(study_name=study_name, storage=storage_url)
 
-study = optuna.load_study(study_name=study_name, storage=storage_url)
-complete_trials, failed_trials, pruned_trials = postprocessing(study)
+study_name = "second"  # Name of the study
+storage_url = "sqlite:///{}.db".format(study_name)
+first_study = optuna.load_study(study_name=study_name, storage=storage_url)
 
-trials_below_one = trials_below(study, 1)
+trials_below_one = trials_below(first_study, 1)
 
-print(f'number of trials: {len(study.trials)}')
-print(f'number of pruned trials: {len(pruned_trials.trials)}')
-print(f'number of complete trials: {len(complete_trials.trials)}')
-print(f'number of trials below 1: {len(trials_below_one.trials)}')
+jitter = np.random.rand(len(trials_below_one.trials) + len(study_small_batch.trials)) - 0.5
 
-print(study.trials.__getitem__(36).value)
-print(study.trials.__getitem__(37).value)
+combined_study = optuna.create_study()
+combined_study.add_trials(trials_below_one.trials)
+combined_study.add_trials(study_small_batch.trials)
 
-print("Best trial:")
-print(study.trials.__getitem__(9).value)
-print(study.best_trial.value)
-print(study.best_params)
-print(study.best_value)
+transformed_study = optuna.create_study()
 
-new_study = optuna.create_study()
+for i,trial in enumerate(trials_below_one.trials):
+    trial.set_user_attr("dec_depth_usr", trial.params["dec_depth"] + jitter[i])
+    transformed_study.add_trial(trial)
 
-count = 0
-for trial in study.trials:
-    if trial.params["kernel_size"] == 9 and trial.params["batch_size"] > 16:
-        count += 1
-print(f'nr of trials with kernel size 9 and batch > 16: {count}')
-
-for trial in pruned_trials.trials:
-    trial.value = 1
-    trial.state=TrialState.COMPLETE
-    new_study.add_trial(trial)
-
-new_study.add_trials(complete_trials.trials)
-
-reduced_complete = optuna.create_study()
-
-for i, trial in enumerate(complete_trials.trials, start=0):
-    if i not in [1,10]:
-        reduced_complete.add_trial(trial)
+for i,trial in enumerate(study_small_batch.trials):
+    trial.set_user_attr("dec_depth_usr", trial.params["dec_depth"] + jitter[i])
+    transformed_study.add_trial(trial)
 
 
 #fig = optuna.visualization.plot_contour(study, params=["batch_size", "kernel_size","init_features","enc_depth", "dec_depth"])
-
-fig = optuna.visualization.plot_intermediate_values(reduced_complete)
+#fig = optuna.visualization.plot_rank(combined_study, params=["dec_depth", "enc_depth", "init_features", "kernel_size"])
+fig = optuna.visualization.plot_param_importances(combined_study)
+#fig = optuna.visualization.plot_slice(combined_study)
 fig.show()
