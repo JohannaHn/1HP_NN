@@ -218,47 +218,44 @@ class Seq2Seq(nn.Module):
                 ) 
 
         # Add Convolutional Layer to predict output frame
-        layers = []
-        
-            
-        conv = nn.Conv2d(in_channels=dec_conv_features[0], 
-                out_channels=dec_conv_features[1],
-                kernel_size=dec_kernel_sizes[0], 
-                stride=1,
-                padding='same',
-                bias=True)
-        
-        layers.append(conv)
-        
-        
-        layers.append(nn.ReLU(inplace=True))
+        self.conv = nn.Sequential()
+
+        self.conv.add_module("dec_conv1", nn.Conv2d(
+            in_channels=dec_conv_features[0], 
+            out_channels=dec_conv_features[1],
+            kernel_size=dec_kernel_sizes[0], 
+            stride=1,
+            padding=(dec_kernel_sizes[0] - 1) // 2,  # Correct padding for 'same'
+            bias=True
+        ))
+        self.conv.add_module("relu1", nn.ReLU(inplace=True))
 
         for i in range(1, len(dec_conv_features)-1):
-            layers.append(nn.Conv2d(
+            self.conv.add_module(f"dec_conv{i+1}", nn.Conv2d(
                 in_channels=dec_conv_features[i],
                 out_channels=dec_conv_features[i+1],
                 kernel_size=dec_kernel_sizes[i],
                 stride=1,
-                padding='same',
+                padding=(dec_kernel_sizes[i] - 1) // 2,  # Correct padding for 'same'
                 bias=True
             ))
-            layers.append(nn.BatchNorm2d(num_features=dec_conv_features[i+1]))
-            layers.append(nn.ReLU(inplace=True))
+            self.conv.add_module("batch", nn.BatchNorm2d(num_features=dec_conv_features[i+1]))
+            self.conv.add_module("relu2", nn.ReLU(inplace=True))
 
-        layers.append(
+        self.conv.add_module("dec_conv_last",
             nn.Conv2d(
                 in_channels=dec_conv_features[-1],
                 out_channels=1,
                 kernel_size=dec_kernel_sizes[-1],
                 stride=1,
-                padding='same',
+                padding=(dec_kernel_sizes[-1] - 1) // 2,  # Correct padding for 'same'
                 bias=True
             )
         )
+
+        #self.conv.add_module("relu_last", nn.ReLU(inplace=True))
         
-        layers.append(nn.ReLU(inplace=True))
-        
-        self.conv = nn.Sequential(*layers)
+
         
 
     def forward(self, X):
@@ -273,7 +270,7 @@ class Seq2Seq(nn.Module):
         for pred_box in range(self.extend):
             curr_output = output[:,:,self.prev_boxes+pred_box]
             #assert curr_output.shape == [50, 64, 64, 64], f'got {curr_output.shape}'
-            new_output[:,:,pred_box] = self.conv(output[:,:,self.prev_boxes+pred_box])
+            new_output[:,:,pred_box] = self.conv(curr_output)
             
         new_output = torch.reshape(new_output, (new_output.shape[0], new_output.shape[1], width*self.extend, height))
         
