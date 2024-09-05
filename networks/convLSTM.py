@@ -30,7 +30,7 @@ class ConvLSTMCell(nn.Module):
 
         layers.append(nn.ReLU(inplace=True))
 
-        for i in range(1, len(conv_features) - 1):
+        for i in range(1, len(conv_features)):
             # Idea adapted from https://github.com/ndrplz/ConvLSTM_pytorch
             layers.append(nn.Conv2d(
                 in_channels=conv_features[i-1],
@@ -218,31 +218,48 @@ class Seq2Seq(nn.Module):
                 ) 
 
         # Add Convolutional Layer to predict output frame
-        self.conv = nn.Sequential(
-            nn.Conv2d(
-                in_channels=dec_conv_features[0], 
+        layers = []
+        
+            
+        conv = nn.Conv2d(in_channels=dec_conv_features[0], 
                 out_channels=dec_conv_features[1],
                 kernel_size=dec_kernel_sizes[0], 
                 stride=1,
                 padding='same',
-                bias=True),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(
-                in_channels=dec_conv_features[1], 
-                out_channels=dec_conv_features[2],
-                kernel_size=dec_kernel_sizes[1], 
-                stride=1, 
-                padding='same',
-                bias=True),
-            nn.BatchNorm2d(num_features=dec_conv_features[2]),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(
-                in_channels=dec_conv_features[2],
-                out_channels=1,
-                kernel_size=dec_kernel_sizes[2],
-                padding='same',
                 bias=True)
+        
+        layers.append(conv)
+        
+        
+        layers.append(nn.ReLU(inplace=True))
+
+        for i in range(1, len(dec_conv_features)-1):
+            layers.append(nn.Conv2d(
+                in_channels=dec_conv_features[i],
+                out_channels=dec_conv_features[i+1],
+                kernel_size=dec_kernel_sizes[i],
+                stride=1,
+                padding='same',
+                bias=True
+            ))
+            layers.append(nn.BatchNorm2d(num_features=dec_conv_features[i+1]))
+            layers.append(nn.ReLU(inplace=True))
+
+        layers.append(
+            nn.Conv2d(
+                in_channels=dec_conv_features[-1],
+                out_channels=1,
+                kernel_size=dec_kernel_sizes[-1],
+                stride=1,
+                padding='same',
+                bias=True
             )
+        )
+        
+        layers.append(nn.ReLU(inplace=True))
+        
+        self.conv = nn.Sequential(*layers)
+        
 
     def forward(self, X):
 
