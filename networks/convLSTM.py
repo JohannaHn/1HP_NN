@@ -239,8 +239,9 @@ class Seq2Seq(nn.Module):
                 padding=(dec_kernel_sizes[i] - 1) // 2,  # Correct padding for 'same'
                 bias=True
             ))
-            self.conv.add_module("batch", nn.BatchNorm2d(num_features=dec_conv_features[i+1]))
-            self.conv.add_module("relu2", nn.ReLU(inplace=True))
+            
+            self.conv.add_module(f"batch{i}", nn.BatchNorm2d(num_features=dec_conv_features[i+1]))
+            self.conv.add_module(f"relu{i+1}", nn.ReLU(inplace=True))
 
         self.conv.add_module("dec_conv_last",
             nn.Conv2d(

@@ -24,53 +24,50 @@ from postprocessing.visualization import plot_avg_error_cellwise, visualizations
 from postprocessing.measurements import measure_loss, save_all_measurements, measure_losses_paper24
 
 def objective(trial):
+        
+    enc_depth = 4
+    dec_depth = 4
 
-    utils.save_yaml(settings, settings.destination, "command_line_arguments.yaml")
-    
-    extend = 2
-    
-    enc_depth = trial.suggest_int("enc_depth", 3, 7)
-    dec_depth = trial.suggest_int("dec_depth", 3, 7)
+    kernel_size = 5
 
-    kernel_size_start = trial.suggest_int("kernel_size", 3, 9, step=2)
+    enc_kernel_sizes = [kernel_size for i in range(enc_depth)]
+    dec_kernel_sizes = [kernel_size for i in range(dec_depth)]
 
-    kernel_size_evolution = trial.suggest_categorical("kernel_size_evolution", ["increasing", "decreasing"])
+    feature_increase_start = 32
 
-    if kernel_size_evolution == "increasing":
-        enc_kernel_sizes = [kernel_size_start+2*i for i in range(enc_depth)]
-        dec_kernel_sizes = [kernel_size_start+2*i for i in range(dec_depth)]
-    if kernel_size_evolution == "decreasing":
-        enc_kernel_sizes = [max(kernel_size_start-2*i, 3) for i in range(enc_depth)]
-        dec_kernel_sizes = [max(kernel_size_start-2*i, 3) for i in range(dec_depth)]
-
-    feature_increase_start = trial.suggest_categorical("init_features", [8, 16, 32, 64, 128])
+    # enc_conv_features = [32, 32, 32]
+    # dec_conv_features = [32, 32, 32, 32]
 
     enc_conv_features = np.array([feature_increase_start, *[feature_increase_start*(2**i) for i in range(1,enc_depth-1)]])
     dec_conv_features = np.array([feature_increase_start*(2**(enc_depth-2)), *[feature_increase_start*(2**(enc_depth-2-i)) for i in range(1,dec_depth)]])
+
     dec_conv_features = dec_conv_features.astype(int)
+    assert enc_conv_features[-1] == dec_conv_features[0], f'last enc is {enc_conv_features} and first dec is {dec_conv_features}'
 
-    print(enc_depth)
-    print(enc_conv_features)
-    print(dec_depth)
-    print(dec_conv_features)
+    batch_size = trial.suggest_int("batch_size_fixed_at", 16, 16)
 
-    batch_size = trial.suggest_categorical("batch_size", [8, 16, 32])
+    lr = trial.suggest_float("learning_rate_fixed_at", 2e-4, 2e-4)
 
-    lr = trial.suggest_float("lr", 1e-5, 1e-1, log=True)
+    # activation
+    activation = trial.suggest_categorical("activation fixed", ["relu"]) #practical reasoning: dont allow negative values (Leaky ReLU)
+
+    # num layers
+    settings.num_layers = trial.suggest_int("num_layers", 2, 4)
+
+    # previous boxes
+    settings.prev_boxes = trial.suggest_int("prev_boxes", 1,3)
+
+    settings.extend = trial.suggest_int("extend", 1, 4)
 
     # Get the dataset.
     _, dataloaders = init_data(settings, batch_size)
 
-    # Generate the model.
-    activation = trial.suggest_categorical("activation", ["relu", "tanh"]) #practical reasoning: dont allow negative values (Leaky ReLU)
+    utils.save_yaml(settings, settings.destination, "command_line_arguments.yaml")
 
-    num_layers = trial.suggest_categorical("num_layers", [2,3,4])
-
-    # trial.suggest_categorical("prev_boxes", [1,2,3])
-
-    model = Seq2Seq(num_channels=3, frame_size=(64,64), prev_boxes =settings.prev_boxes, 
-                            extend=extend, 
-                            num_layers=num_layers,
+    # Generate the model
+    model = Seq2Seq(num_channels=3, frame_size=(64,64), prev_boxes=settings.prev_boxes, 
+                            extend=settings.extend, 
+                            num_layers=settings.num_layers,
                             enc_conv_features=enc_conv_features,
                             enc_kernel_sizes=enc_kernel_sizes,
                             dec_conv_features=dec_conv_features,
@@ -118,7 +115,7 @@ if __name__ == "__main__":
     parser.add_argument("--dataset_raw", type=str, default="extend_plumes/ep_medium_1000dp_only_vary_dist", help="Name of the raw dataset (without inputs)")
     parser.add_argument("--dataset_prep", type=str, default="extend_plumes/ep_medium_1000dp_only_vary_dist inputs_ks")
     parser.add_argument("--device", type=str, default="cuda:0")
-    parser.add_argument("--epochs", type=int, default=60)
+    parser.add_argument("--epochs", type=int, default=80)
     parser.add_argument("--case", type=str, choices=["train", "test", "finetune"], default="train")
     parser.add_argument("--model", type=str, default="default") # required for testing or finetuning
     parser.add_argument("--destination", type=str, default="")
@@ -141,12 +138,12 @@ if __name__ == "__main__":
 
     settings = prepare_data_and_paths(settings)
 
-    study_name = "kernel_size_evolution"  # Unique identifier of the study.
+    study_name = "layers_prev_extend"  # Unique identifier of the study.
     storage_name = "sqlite:///{}.db".format(study_name)
    # optuna.delete_study(study_name=study_name, storage=storage_name)
     study = optuna.create_study(direction="minimize", study_name=study_name, storage=storage_name, load_if_exists=True)
 
-    study.optimize(objective, n_trials=25, gc_after_trial=True)
+    study.optimize(objective, n_trials=50, gc_after_trial=True)
 
     pruned_trials = study.get_trials(deepcopy=False, states=[TrialState.PRUNED])
     complete_trials = study.get_trials(deepcopy=False, states=[TrialState.COMPLETE])

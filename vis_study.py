@@ -85,23 +85,33 @@ study_name = "second"  # Name of the study
 storage_url = "sqlite:///{}.db".format(study_name)
 first_study = optuna.load_study(study_name=study_name, storage=storage_url)
 
-trials_below_one = trials_below(first_study, 1)
+with_metrics = optuna.load_study(study_name="with_metrics", storage="sqlite:///with_metrics.db")
+
+study_name = "layers_prev_extend"  # Name of the study
+storage_url = "sqlite:///{}.db".format(study_name)
+layers_prev_extend = optuna.load_study(study_name=study_name, storage=storage_url)
+
+study_name = "kernel_size_evolution"  # Name of the study
+storage_url = "sqlite:///{}.db".format(study_name)
+kernel_size_evolution = optuna.load_study(study_name=study_name, storage=storage_url)
 
 combined_study = optuna.create_study()
-combined_study.add_trials(trials_below_one.trials)
 combined_study.add_trials(study_small_batch.trials)
+combined_study.add_trials(first_study.trials)
+combined_study.add_trials(with_metrics.trials)
+combined_study.add_trials(kernel_size_evolution.trials)
 
-transformed_study = optuna.create_study()
-for trial in study_small_batch.trials:
-    if trial.number != 3:
-        transformed_study.add_trial(trial)
-
-#plot_num_params(combined_study)
+study = optuna.create_study()
+for trial in combined_study.trials:
+    if trial.value is not None and trial.value < 1:
+        study.add_trial(trial)
 
 
 #fig = optuna.visualization.plot_contour(study, params=["batch_size", "kernel_size","init_features","enc_depth", "dec_depth"])
 #fig = optuna.visualization.plot_rank(combined_study, params=["dec_depth", "enc_depth", "init_features", "kernel_size"])
 #fig = optuna.visualization.plot_param_importances(combined_study)
-#fig = optuna.visualization.plot_slice(combined_study)
-fig = optuna.visualization.plot_timeline(study_small_batch)
+#fig = optuna.visualization.plot_slice(layers_prev_extend)
+fig = optuna.visualization.plot_slice(study)
+#fig = optuna.visualization.plot_timeline(study_small_batch)
 fig.show()
+
