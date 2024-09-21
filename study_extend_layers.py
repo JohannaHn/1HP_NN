@@ -33,7 +33,7 @@ def objective(trial):
     enc_kernel_sizes = [kernel_size for i in range(enc_depth)]
     dec_kernel_sizes = [kernel_size for i in range(dec_depth)]
 
-    feature_increase_start = 32
+    feature_increase_start = 16
 
     # enc_conv_features = [32, 32, 32]
     # dec_conv_features = [32, 32, 32, 32]
@@ -52,12 +52,12 @@ def objective(trial):
     activation = trial.suggest_categorical("activation fixed", ["relu"]) #practical reasoning: dont allow negative values (Leaky ReLU)
 
     # num layers
-    settings.num_layers = trial.suggest_int("num_layers", 2, 4)
+    settings.num_layers = trial.suggest_int("num_layers", 2,2) # originally 1,4 but there are little data points with num_layers = 1
 
     # previous boxes
-    settings.prev_boxes = trial.suggest_int("prev_boxes", 1,3)
+    settings.prev_boxes = trial.suggest_int("prev_boxes", 3,3)
 
-    settings.extend = trial.suggest_int("extend", 1, 4)
+    settings.extend = trial.suggest_int("extend",2,2)
 
     # Get the dataset.
     _, dataloaders = init_data(settings, batch_size)
