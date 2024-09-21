@@ -44,7 +44,7 @@ def objective(trial):
     dec_conv_features = dec_conv_features.astype(int)
     assert enc_conv_features[-1] == dec_conv_features[0], f'last enc is {enc_conv_features} and first dec is {dec_conv_features}'
 
-    batch_size = trial.suggest_int("batch_size_fixed_at", 16,16,)
+    batch_size = trial.suggest_int("batch_size_fixed_at", 16,16)
 
     lr = trial.suggest_float("learning_rate_fixed_at", 2e-4, 2e-4)
 
@@ -55,9 +55,9 @@ def objective(trial):
     settings.num_layers = trial.suggest_int("num_layers", 3, 3)
 
     # previous boxes
-    settings.prev_boxes = trial.suggest_int("prev_boxes",3,3) # originally 1, 4 (but i want more runs with prev_boxes=2)
+    settings.prev_boxes = trial.suggest_int("prev_boxes",2,2) # originally 1, 4 (but i want more runs with prev_boxes=2)
 
-    settings.extend = trial.suggest_int("extend",2,2)
+    settings.extend = trial.suggest_int("extend", 4,4)
 
     # Get the dataset.
     _, dataloaders = init_data(settings, batch_size)
