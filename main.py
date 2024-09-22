@@ -168,7 +168,7 @@ def save_inference(model_name:str, in_channels: int, settings: SettingsTraining)
         y_out = y_out.detach().cpu()
         y_out = torch.squeeze(y_out, 0)
         torch.save(y_out, data_dir / "Outputs" / datapoint.name)
-        print(f"Inference of {datapoint.name} took {time_end-time_start} seconds")
+        print(f"Inference of {datapoint.name} took {tfime_end-time_start} seconds")
     
     print(f"Inference finished, outputs saved in {data_dir / 'Outputs'}")
 
