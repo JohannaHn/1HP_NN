@@ -28,8 +28,8 @@ def objective(trial):
     utils.save_yaml(settings, settings.destination, "command_line_arguments.yaml")
     
     extend = trial.suggest_int("extend", 1,6)
-    prev_boxes = trial.suggest_int("prev_boxes", 1,4)
-    num_layers = trial.suggest_int("num_layers", 3,3)
+    prev_boxes = trial.suggest_int("prev_boxes", 3,3)
+    num_layers = trial.suggest_int("num_layers", 1,4)
     
     enc_depth = 4
     dec_depth = 4
@@ -134,9 +134,9 @@ if __name__ == "__main__":
 
     settings = prepare_data_and_paths(settings)
 
-    search_space = {"prev_boxes": [1,2,3,4], "extend": [1,2,3,4,5,6]}
+    search_space = {"num_layers": [1,2,3,4], "extend": [1,2,3,4,5,6]}
 
-    study_name = "grid"  # Unique identifier of the study.
+    study_name = "grid_layers"  # Unique identifier of the study.
     storage_name = "sqlite:///{}.db".format(study_name)
    # optuna.delete_study(study_name=study_name, storage=storage_name)
     study = optuna.create_study(direction="minimize", study_name=study_name, storage=storage_name, load_if_exists=True, sampler=optuna.samplers.GridSampler(search_space))
