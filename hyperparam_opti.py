@@ -136,7 +136,7 @@ if __name__ == "__main__":
 
     search_space = {"prev_boxes": [1,2,3,4], "extend": [1,2,3,4,5,6]}
 
-    study_name = "grid"  # Unique identifier of the study.
+    study_name = "grid_prev"  # Unique identifier of the study.
     storage_name = "sqlite:///{}.db".format(study_name)
    # optuna.delete_study(study_name=study_name, storage=storage_name)
     study = optuna.create_study(direction="minimize", study_name=study_name, storage=storage_name, load_if_exists=True, sampler=optuna.samplers.GridSampler(search_space))
