@@ -51,6 +51,8 @@ def objective(trial):
     batch_size = trial.suggest_categorical("batch_size fixed at", [16])
 
     lr = trial.suggest_float("lr_fixed_at", 2e-4, 2e-4, log=True)
+    settings.prev_boxes = prev_boxes
+    settings.extend = extend
 
     # Get the dataset.
     _, dataloaders = init_data(settings, batch_size)
@@ -136,7 +138,7 @@ if __name__ == "__main__":
 
     search_space = {"prev_boxes": [1,2,3,4], "extend": [1,2,3,4,5,6]}
 
-    study_name = "grid_prev"  # Unique identifier of the study.
+    study_name = "grid_prev_new"  # Unique identifier of the study.
     storage_name = "sqlite:///{}.db".format(study_name)
    # optuna.delete_study(study_name=study_name, storage=storage_name)
     study = optuna.create_study(direction="minimize", study_name=study_name, storage=storage_name, load_if_exists=True, sampler=optuna.samplers.GridSampler(search_space))

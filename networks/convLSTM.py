@@ -73,12 +73,7 @@ class ConvLSTMCell(nn.Module):
 
         # Idea adapted from https://github.com/ndrplz/ConvLSTM_pytorch
         i_conv, f_conv, C_conv, o_conv = torch.chunk(conv_output, chunks=4, dim=1)
-
-        with open('/home/hofmanja/1HP_NN/test4.txt', 'w') as file:
-            file.write(f'i_conv shape: {i_conv.shape}\n')
-            file.write(f'self.W_ci: {self.W_ci.shape}\n')
-            file.write(f'C_prev: {C_prev.shape}\n' )
-
+        
         input_gate = torch.sigmoid(i_conv + self.W_ci * C_prev )
         forget_gate = torch.sigmoid(f_conv + self.W_cf * C_prev )
 
@@ -160,6 +155,8 @@ class ConvLSTM(nn.Module):
 
         # Initialize Cell Input
         C = torch.zeros(batch_size,self.out_channels, height, width, device='cuda')
+
+        assert X.shape[2] == self.prev_boxes+self.extend, f"Shape mismatch: got {X.shape[2]} but expected {self.prev_boxes + self.extend} (prev_boxes={self.prev_boxes}, extend={self.extend})"
 
         # Unroll over time steps
         for time_step in range(self.prev_boxes):

@@ -1,5 +1,5 @@
 import os
-from pynvml import *
+# from pynvml mport *
 import re
 from typing import List
 import yaml
