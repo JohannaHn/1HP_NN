@@ -7,6 +7,7 @@ from networks.convLSTM import Seq2Seq
 import statistics as stat
 import os
 import logging
+from collections import defaultdict
 
 def trials_below(study, threshold=1.0):
     """Count the number of trials with loss (objective value) below the specified threshold."""
@@ -173,16 +174,23 @@ def plot_analysis():
     extend_org = []
     prev_boxes_org = []
     values_org = []
-    for trial in layers_prev_extend.trials:
-        if trial.value is not None and trial.value < 1:
-            try:
-                num_layers_org.append(trial.params["num_layers"])
-                extend_org.append(trial.params["extend"])
-                prev_boxes_org.append(trial.params["prev_boxes"])
-                values_org.append(trial.value)
-            except KeyError:
+    for study in studies:
+        for trial in study.trials:
+            
+            if trial.value is None or len(trial.intermediate_values) != 80:
                 continue
+            print(len(trial.intermediate_values))
+            value = get_best_inter_value(trial)
+            if value is not None and value < 0.0006:
+                try:
+                    num_layers_org.append(trial.params["num_layers"])
+                    extend_org.append(trial.params["extend"])
+                    prev_boxes_org.append(trial.params["prev_boxes"])
+                    values_org.append(value)
+                except KeyError:
+                    print(f"Key Error in study {study.name}")
 
+    colors = ['#c2e699', '#78c679', '#31a354', '#006837']
 
     fig, ax = plt.subplots(2, 2, figsize=(10,6))
     list1 = list(zip(extend_org, num_layers_org, values_org, prev_boxes_org))
@@ -191,42 +199,62 @@ def plot_analysis():
     extend_2 = list([item[0] for item in list1 if item[1] == 1 and item[3] == 3])
     loss_2 = list([item[2] for item in list1 if item[1] == 1 and item[3] == 3])
     paired = sorted(zip(extend_2, loss_2))
-    x, y = zip(*paired)
-    ax[0][0].plot(x,y, label="1 LSTM layer")
-    ax[0][1].scatter(x,y, s=5, alpha=0.5, label="1 LSTM layer")
+    loss_dict = defaultdict(list)
+    for e, l in paired:
+        loss_dict[e].append(l)
+    mean_loss_dict = {e: sum(losses) / len(losses) for e, losses in loss_dict.items()}
+    x, y = zip(*mean_loss_dict.items())
+    # x,y = zip(*paired)
+    ax[0][0].plot(x,y, color=colors[0], label="1 Layer")
+    ax[0][1].scatter(x,y, color=colors[0], s=15, marker="x", label="1 LSTM layer")
     a, b, c = np.polyfit(x, y, deg=2)
     x_lin = np.linspace(1,6,50)
-    ax[0][1].plot(x_lin, a* x_lin**2 + b * x_lin + c)
+    # ax[0][1].plot(x_lin, a* x_lin**2 + b * x_lin + c)
 
     # num layers = 2
     extend_2 = list([item[0] for item in list1 if item[1] == 2 and item[3] == 3])
     loss_2 = list([item[2] for item in list1 if item[1] == 2 and item[3] == 3])
     paired = sorted(zip(extend_2, loss_2))
-    x, y = zip(*paired)
-    ax[0][0].plot(x,y, label="2 LSTM layers")
-    ax[0][1].scatter(x,y, s=5, alpha=0.5, label="2 LSTM layers")
+    loss_dict = defaultdict(list)
+    for e, l in paired:
+        loss_dict[e].append(l)
+    mean_loss_dict = {e: sum(losses) / len(losses) for e, losses in loss_dict.items()}
+    x, y = zip(*mean_loss_dict.items())
+    # x,y =zip(*paired)
+    ax[0][0].plot(x,y, color=colors[1], label="2 LSTM layers")
+    ax[0][1].scatter(x,y, color=colors[1], s=15, marker='x', label="2 LSTM layers")
     a, b, c = np.polyfit(x, y, deg=2)
-    ax[0][1].plot(x_lin, a*x_lin**2 + b * x_lin + c)
+    # ax[0][1].plot(x_lin, a*x_lin**2 + b * x_lin + c)
 
     # num layers = 3
     extend = list([item[0] for item in list1 if item[1] == 3 and item[3] == 3])
     loss = list([item[2] for item in list1 if item[1] == 3 and item[3] == 3])
     paired = sorted(zip(extend, loss))
-    x, y = zip(*paired)
-    ax[0][0].plot(x,y, label="3 LSTM layers")
-    ax[0][1].scatter(x,y, s=15, alpha=0.5, label="3 LSTM layers")
+    loss_dict = defaultdict(list)
+    for e, l in paired:
+        loss_dict[e].append(l)
+    mean_loss_dict = {e: sum(losses) / len(losses) for e, losses in loss_dict.items()}
+    x, y = zip(*mean_loss_dict.items())
+    # x,y = zip(*paired)
+    ax[0][0].plot(x,y, color=colors[2], label="3 LSTM layers")
+    ax[0][1].scatter(x,y, s=15, color=colors[2], marker='x', label="3 LSTM layers")
     a,b,c = np.polyfit(x, y, deg=2)
-    ax[0][1].plot(x_lin, a*x_lin**2 + b * x_lin + c)
+    # ax[0][1].plot(x_lin, a*x_lin**2 + b * x_lin + c)
 
     # num layers = 4
     extend = list([item[0] for item in list1 if item[1] == 4 and item[3] == 3])
     loss = list([item[2] for item in list1 if item[1] == 4 and item[3] == 3])
     paired = sorted(zip(extend, loss))
-    x, y = zip(*paired)
-    ax[0][0].plot(x,y, label="4 LSTM layers")
-    ax[0][1].scatter(x,y,s=5, alpha=0.5, label="4 LSTM layer")
+    loss_dict = defaultdict(list)
+    for e, l in paired:
+        loss_dict[e].append(l)
+    mean_loss_dict = {e: sum(losses) / len(losses) for e, losses in loss_dict.items()}
+    x, y = zip(*mean_loss_dict.items())
+    # x,y = zip(*paired)
+    ax[0][0].plot(x,y, color=colors[3], label="4 LSTM layers")
+    ax[0][1].scatter(x,y,s=15, color=colors[3], marker="x", label="4 LSTM layer")
     a,b,c = np.polyfit(x, y, deg=2)
-    ax[0][1].plot(x_lin, a*x_lin**2 + b * x_lin + c)
+    # ax[0][1].plot(x_lin, a*x_lin**2 + b * x_lin + c)
 
     ax[0][0].set_xlabel("Extend Boxes")
     ax[0][0].set_ylabel("Loss")
@@ -239,72 +267,279 @@ def plot_analysis():
     extend_2 = list([item[0] for item in list1 if item[1] == 1 and item[3]==3])
     loss_2 = list([item[2] for item in list1 if item[1] == 1 and item[3]==3])
     paired = sorted(zip(extend_2, loss_2))
-    x, y = zip(*paired)
-    ax[1][0].plot(x,y, label="1 Prev Boxes")
-    ax[1][1].scatter(x,y,s=5, alpha=0.5, label="1 Prev Boxes")
+    loss_dict = defaultdict(list)
+    for e, l in paired:
+        loss_dict[e].append(l)
+    mean_loss_dict = {e: sum(losses) / len(losses) for e, losses in loss_dict.items()}
+    x, y = zip(*mean_loss_dict.items())
+    # x,y = zip(*paired)
+    ax[1][0].plot(x,y, color=colors[0], label="1 Prev Boxes")
+    ax[1][1].scatter(x,y,s=15, marker='x', color=colors[0], label="1 Prev Boxes")
     a,b,c = np.polyfit(x, y, deg=2)
-    ax[1][1].plot(x_lin, a*x_lin**2 + b * x_lin + c)
+    # ax[1][1].plot(x_lin, a*x_lin**2 + b * x_lin + c)
 
     # prev boxes = 2
     extend_2 = list([item[0] for item in list1 if item[1] == 2 and item[3]==3])
     loss_2 = list([item[2] for item in list1 if item[1] == 2 and item[3]==3])
     paired = sorted(zip(extend_2, loss_2))
-    x, y = zip(*paired)
-    ax[1][0].plot(x,y, label="2 Prev Boxes")
-    ax[1][1].scatter(x,y,s=5, alpha=0.5, label="2 Prev Boxes")
+    loss_dict = defaultdict(list)
+    for e, l in paired:
+        loss_dict[e].append(l)
+    mean_loss_dict = {e: sum(losses) / len(losses) for e, losses in loss_dict.items()}
+    x, y = zip(*mean_loss_dict.items())
+    # x,y = zip(*paired)
+    ax[1][0].plot(x,y, color=colors[1], label="2 Prev Boxes")
+    ax[1][1].scatter(x,y,s=15, marker='x', color=colors[1], label="2 Prev Boxes")
     a,b,c = np.polyfit(x, y, deg=2)
-    ax[1][1].plot(x_lin, a*x_lin**2 + b * x_lin + c)
+    # ax[1][1].plot(x_lin, a*x_lin**2 + b * x_lin + c)
+    ax[1][1].set_ylim(0,0.0003)
+    ax[0][1].set_ylim(0.00004,0.000125)
 
     # prev boxes = 3
     extend = list([item[0] for item in list1 if item[1] == 3 and item[3]==3])
     loss = list([item[2] for item in list1 if item[1] == 3 and item[3]==3])
     paired = sorted(zip(extend, loss))
-    x, y = zip(*paired)
-    ax[1][0].plot(x,y, label="3 Prev Boxes")
-    ax[1][1].scatter(x,y,s=15, alpha=0.5, label="3 Prev Boxes")
+    loss_dict = defaultdict(list)
+    for e, l in paired:
+        loss_dict[e].append(l)
+    mean_loss_dict = {e: sum(losses) / len(losses) for e, losses in loss_dict.items()}
+    x, y = zip(*mean_loss_dict.items())
+    # x,y = zip(*paired)
+    ax[1][0].plot(x,y, color=colors[2], label="3 Prev Boxes")
+    ax[1][1].scatter(x,y, s=15, marker='x', color=colors[2], label="3 Prev Boxes")
     a,b,c = np.polyfit(x, y, deg=2)
-    ax[1][1].plot(x_lin, a*x_lin**2 + b * x_lin + c)
+    # ax[1][1].plot(x_lin, a*x_lin**2 + b * x_lin + c)
+
     # prev boxes = 4
     extend = list([item[0] for item in list1 if item[1] == 4 and item[3]==3])
     loss = list([item[2] for item in list1 if item[1] == 4 and item[3]==3])
     paired = sorted(zip(extend, loss))
-    x, y = zip(*paired)
-    ax[1][0].plot(x,y, label="4 Prev Boxes")
-    ax[1][1].scatter(x,y,s=5, alpha=0.5, label="4 Prev Boxes")
+    loss_dict = defaultdict(list)
+    for e, l in paired:
+        loss_dict[e].append(l)
+    mean_loss_dict = {e: sum(losses) / len(losses) for e, losses in loss_dict.items()}
+    x, y = zip(*mean_loss_dict.items())
+    # x,y = zip(*paired)
+    ax[1][0].plot(x,y, color=colors[3], label="4 Prev Boxes")
+    ax[1][1].scatter(x,y,s=15, marker='x', color=colors[3],label="4 Prev Boxes")
     a,b,c = np.polyfit(x, y, deg=2)
-    ax[1][1].plot(x_lin, a*x_lin**2 + b * x_lin + c)
+    # ax[1][1].plot(x_lin, a*x_lin**2 + b * x_lin + c)
+
 
     ax[1][0].set_xlabel("Extend Boxes")
     ax[1][0].set_ylabel("Loss")
     ax[1][0].legend(loc='upper right')
-    plt.savefig("plot_study.png")
+    fig.savefig("/home/hofmanja/1HP_NN/plot_study2.png")
+
+
+def plot_analysis_scatter():
+    num_layers_org = []
+    extend_org = []
+    prev_boxes_org = []
+    values_org = []
+    
+    # Extract data from studies
+    for study in studies:
+        for trial in study.trials:
+            if trial.value is None or len(trial.intermediate_values) != 80:
+                continue
+            value = get_best_inter_value(trial)
+            if value is not None and value < 0.0006:
+                try:
+                    num_layers_org.append(trial.params["num_layers"])
+                    extend_org.append(trial.params["extend"])
+                    prev_boxes_org.append(trial.params["prev_boxes"])
+                    values_org.append(value)
+                except KeyError:
+                    print(f"Key Error in study {study.name}")
+
+    colors = ['#c2e699', '#78c679', '#31a354', '#006837']
+
+    fig, ax = plt.subplots(1, 2, figsize=(10, 4))
+
+    list1 = list(zip(extend_org, num_layers_org, values_org, prev_boxes_org))
+
+    # Plot for num_layers = 1 (ax[0][1])
+    extend_2 = [item[0] for item in list1 if item[1] == 1 and item[3] == 3]
+    loss_2 = [item[2] for item in list1 if item[1] == 1 and item[3] == 3]
+    paired = sorted(zip(extend_2, loss_2))
+    loss_dict = defaultdict(list)
+    for e, l in paired:
+        loss_dict[e].append(l)
+    mean_loss_dict = {e: sum(losses) / len(losses) for e, losses in loss_dict.items()}
+    x, y = zip(*mean_loss_dict.items())
+    ax[0].scatter(x, y, color=colors[0], s=40, marker="x", label="1 Layer")
+
+    # num layers = 2
+    extend_2 = list([item[0] for item in list1 if item[1] == 2 and item[3] == 3])
+    loss_2 = list([item[2] for item in list1 if item[1] == 2 and item[3] == 3])
+    paired = sorted(zip(extend_2, loss_2))
+    loss_dict = defaultdict(list)
+    for e, l in paired:
+        loss_dict[e].append(l)
+    mean_loss_dict = {e: sum(losses) / len(losses) for e, losses in loss_dict.items()}
+    x, y = zip(*mean_loss_dict.items())
+    ax[0].scatter(x, y, color=colors[1], s=40, marker="x", label="2 Layers")
+    
+    # num layers = 3
+    extend = list([item[0] for item in list1 if item[1] == 3 and item[3] == 3])
+    loss = list([item[2] for item in list1 if item[1] == 3 and item[3] == 3])
+    paired = sorted(zip(extend, loss))
+    loss_dict = defaultdict(list)
+    for e, l in paired:
+        loss_dict[e].append(l)
+    mean_loss_dict = {e: sum(losses) / len(losses) for e, losses in loss_dict.items()}
+    x, y = zip(*mean_loss_dict.items())
+    ax[0].scatter(x, y, color=colors[2], s=40, marker="x", label="3 Layers")
+
+    # num layers = 4
+    extend = list([item[0] for item in list1 if item[1] == 4 and item[3] == 3])
+    loss = list([item[2] for item in list1 if item[1] == 4 and item[3] == 3])
+    paired = sorted(zip(extend, loss))
+    loss_dict = defaultdict(list)
+    for e, l in paired:
+        loss_dict[e].append(l)
+    mean_loss_dict = {e: sum(losses) / len(losses) for e, losses in loss_dict.items()}
+    x, y = zip(*mean_loss_dict.items())
+    ax[0].scatter(x,y,s=40, color=colors[3], marker="x", label="4 Layers")
+
+    ax[0].set_ylim(0.00004, 0.000125)
+    ax[0].set_xlabel("Predicted Frames (Dec length)")
+    ax[0].set_ylabel("Loss")
+    ax[0].legend(loc='upper right', bbox_to_anchor=(1,1))
+
+    list1 = list(zip(extend_org, prev_boxes_org, values_org, num_layers_org))
+    # Plot for prev_boxes = 1 (ax[1][1])
+    extend_2 = [item[0] for item in list1 if item[1] == 1 and item[3] == 3]
+    loss_2 = [item[2] for item in list1 if item[1] == 1 and item[3] == 3]
+    paired = sorted(zip(extend_2, loss_2))
+    print(paired)
+    loss_dict = defaultdict(list)
+    for e, l in paired:
+        loss_dict[e].append(l)
+    mean_loss_dict = {e: sum(losses) / len(losses) for e, losses in loss_dict.items()}
+    x, y = zip(*mean_loss_dict.items())
+    print(x)
+    print(y)
+    ax[1].scatter(x, y, s=40, marker='x', color=colors[0], label="Enc length 1")
+
+    # prev boxes = 2
+    extend_2 = list([item[0] for item in list1 if item[1] == 2 and item[3]==3])
+    loss_2 = list([item[2] for item in list1 if item[1] == 2 and item[3]==3])
+    paired = sorted(zip(extend_2, loss_2))
+    loss_dict = defaultdict(list)
+    for e, l in paired:
+        loss_dict[e].append(l)
+    mean_loss_dict = {e: sum(losses) / len(losses) for e, losses in loss_dict.items()}
+    x, y = zip(*mean_loss_dict.items())
+    ax[1].scatter(x, y, s=40, marker='x', color=colors[1], label="Enc length 2")
+
+    # prev boxes = 3
+    extend = list([item[0] for item in list1 if item[1] == 3 and item[3]==3])
+    loss = list([item[2] for item in list1 if item[1] == 3 and item[3]==3])
+    paired = sorted(zip(extend, loss))
+    loss_dict = defaultdict(list)
+    for e, l in paired:
+        loss_dict[e].append(l)
+    mean_loss_dict = {e: sum(losses) / len(losses) for e, losses in loss_dict.items()}
+    x, y = zip(*mean_loss_dict.items())
+    ax[1].scatter(x, y, s=40, marker='x', color=colors[2], label="Enc length 3")
+
+    # prev boxes = 4
+    extend = list([item[0] for item in list1 if item[1] == 4 and item[3]==3])
+    loss = list([item[2] for item in list1 if item[1] == 4 and item[3]==3])
+    paired = sorted(zip(extend, loss))
+    loss_dict = defaultdict(list)
+    for e, l in paired:
+        loss_dict[e].append(l)
+    mean_loss_dict = {e: sum(losses) / len(losses) for e, losses in loss_dict.items()}
+    x, y = zip(*mean_loss_dict.items())
+    ax[1].scatter(x,y,s=40, marker='x', color=colors[3],label="Enc length 3")
+    
+    ax[1].set_ylim(0, 0.00034)
+    ax[1].set_xlabel("Predicted Frames (Dec length)")
+    ax[1].legend(loc='upper right', bbox_to_anchor=(1.45,1))
+
+    for axis in ax.flat:
+        axis.ticklabel_format(axis='y', style='sci', scilimits=(0,0))
+
+    fig.tight_layout()
+    plt.subplots_adjust(wspace=0.3)
+    fig.savefig("/home/hofmanja/1HP_NN/plot_analysis_scatter.png", dpi=500)
 
 
 
-logging.getLogger("optuna").setLevel(logging.WARNING)
-databases = "/home/hofmanja/1HP_NN/databases"
-database_names = os.listdir(databases)
+def get_best_inter_value(trial):
+    best = trial.value
+    for i in range(len(trial.intermediate_values)):
+        if trial.intermediate_values[i] < best:
+            best = trial.intermediate_values[i]
 
-plotted = ["with_metrics","second","layers_prev_extend","layers_prev_extend_without_pruned", "kernel_size_evolution", "small_batch"]
-#plotted = []
+    return best
 
-# for db in database_names:
-#     db_path = os.path.join(databases, db)  # Use os.path.join to construct the full path
-#     name_without_extension = os.path.splitext(db)[0]  # Get the name without extension
-#     storage_url = f"sqlite:///{db_path}"  # Correctly format the storage URL
 
-#     if name_without_extension not in plotted:
-#         try:
-#             study = optuna.load_study(study_name=name_without_extension, storage=storage_url)
-#             study = trials_below(study, 1)
-#             fig = optuna.visualization.plot_slice(study)
-#             fig.show()
-#             fig = optuna.visualization.plot_intermediate_values(study)
-#             fig.show()
-#             print(f"{name_without_extension} plotted.")
-#             plotted.append(name_without_extension)
-#         except Exception as e:
-#             print(f"Error loading {name_without_extension}:", e)
+def plot_slice(study):
+    best_value = 1
+    best_params = [1 for i in range(8)]
+    params = ["batch_size", "lr", "enc_depth", "dec_depth", "init_features", "kernel_size", "num_layers", "prev_boxes"]
+    fig, ax = plt.subplots(2,4,sharey='row')
+    for trial in study.trials:
+        value = get_best_inter_value(trial)
+        if value < best_value:
+            best_value = value
+            for i in range(8):
+                best_params[i] = trial.params[params[i]]
+
+        ax[0][0].scatter(trial.params["batch_size"], value, marker='x', s=15, color="blue", alpha=0.5)
+        ax[0][0].set_xlabel("Batch size")
+        ax[0][0].set_xticks([16,32])
+        ax[0][0].set_xlim(8,40)
+        if trial.params["lr"] < 0.01:
+            ax[0][1].scatter(trial.params["lr"], value, marker='x', s=15, color="blue", alpha=0.5)
+        ax[0][1].set_xlabel("Learning rate")
+        ax[0][1].set_xticks([0.0002, 0.003])
+        ax[0][1].set_xticklabels([r'$2 \cdot 10^{-4}$', r'$3 \cdot 10^{-3}$'])
+        ax[0][2].scatter(trial.params["enc_depth"], value , marker='x', s=15, color="blue", alpha=0.5)
+        ax[0][2].set_xlabel("Enc. conv. layers")
+        ax[0][2].set_xticks([4,5,6,7])
+        ax[0][2].set_xlim(3.5,7.5)
+        ax[0][3].scatter(trial.params["dec_depth"], value, marker='x', s=15, color="blue", alpha=0.5)
+        ax[0][3].set_xlabel("Dec. conv. layers")
+        ax[0][3].set_xticks([4,5,6])
+        ax[0][3].set_xlim(3.5, 6.5)
+        ax[1][0].scatter(trial.params["init_features"], value,marker='x', s=15, color="blue", alpha=0.5)
+        ax[1][0].set_xlabel("Initial features")
+        ax[1][0].set_xticks([16,32,64])
+        ax[1][0].set_xlim(8,72)
+        ax[1][1].scatter(trial.params["kernel_size"], value, marker='x', s=15, color="blue", alpha=0.5)
+        ax[1][1].set_xlabel("Kernel size")
+        ax[1][1].set_xticks([3,5,7,9])
+        ax[1][1].set_xlim(2.5, 9.5)
+        ax[1][2].scatter(trial.params["num_layers"], value, marker='x', s=15, color="blue", alpha=0.5)
+        ax[1][2].set_xlabel("Layers")
+        ax[1][2].set_xticks([2,3,4])
+        ax[1][2].set_xlim(1.5, 4.5)
+        ax[1][3].scatter(trial.params["prev_boxes"], value, marker='x', s=15, color="blue", alpha=0.5)
+        ax[1][3].set_xlabel("Encoder length")
+        ax[1][3].set_xticks([1,2,3])
+        ax[1][3].set_xlim(0.5, 3.5)
+
+    
+    for axis in ax.flat:
+        #axis.yaxis.set_major_formatter(ticker.FuncFormatter(lambda x, _: f'{int(x * 1e4)}'))
+        axis.ticklabel_format(axis='y', style='sci', scilimits=(0,0))
+
+    params = [16, 0.0004, 4, 4, 64, 5, 2, 3]
+
+    for i, axis in enumerate(ax.flat):
+        axis.scatter(best_params[i], best_value, marker='x', s=15, color="red")
+
+    fig.tight_layout()
+    plt.subplots_adjust(wspace=0.1)
+    fig.savefig("/home/hofmanja/1HP_NN/plot_hyperparams.png", dpi=500)
+
+
+
 
 # db_path = "/home/hofmanja/1HP_NN/databases/second.db"  # Use os.path.join to construct the full path
 # name_without_extension = "second"  # Get the name without extension
@@ -312,36 +547,41 @@ plotted = ["with_metrics","second","layers_prev_extend","layers_prev_extend_with
 # study = optuna.load_study(study_name=name_without_extension, storage=storage_url)
 # print(study.best_params)
         
-studies = []
-for db in database_names:
-    if db in ["layers_prev_extend_without_pruned.db"]:
-        db_path = os.path.join(databases, db)  # Use os.path.join to construct the full path
-        name_without_extension = os.path.splitext(db)[0]  # Get the name without extension
-        storage_url = f"sqlite:///{db_path}"
-        study = optuna.load_study(study_name=name_without_extension, storage=storage_url)
-        studies.append(study)
+# studies = []
+# for db in database_names:
+#     if db in ["layers_prev_extend_without_pruned.db"]:
+#         db_path = os.path.join(databases, db)  # Use os.path.join to construct the full path
+#         name_without_extension = os.path.splitext(db)[0]  # Get the name without extension
+#         storage_url = f"sqlite:///{db_path}"
+#         study = optuna.load_study(study_name=name_without_extension, storage=storage_url)
+#         studies.append(study)
 
-# plot_box_plot(studies)
 
-#remove outliers
-layers_prev_extend = optuna.load_study(study_name="layers_prev_extend_without_pruned", storage="sqlite:////home/hofmanja/1HP_NN/databases/layers_prev_extend_without_pruned.db")
-layers_prev_extend2 = optuna.load_study(study_name="layers_prev_extend_without_pruned", storage="sqlite:////home/hofmanja/1HP_NN/layers_prev_extend_without_pruned.db")
+layers_prev_extend = optuna.load_study(study_name="layers_prev_extend_without_pruned", storage="sqlite:////home/hofmanja/1HP_NN/study/layers_prev_extend_without_pruned.db")
+layers_prev_extend2 = optuna.load_study(study_name="layers_prev_extend", storage="sqlite:////home/hofmanja/1HP_NN/study/layers_prev_extend.db")
+layers_prev_extend3 = optuna.load_study(study_name="grid_layers_new", storage="sqlite:////home/hofmanja/1HP_NN/grid_layers_new.db")
+layers_prev_extend4 = optuna.load_study(study_name="grid_layers_new2", storage="sqlite:////home/hofmanja/1HP_NN/grid_layers_new2.db")
+layers_prev_extend5 = optuna.load_study(study_name="grid_layers", storage="sqlite:////home/hofmanja/1HP_NN/grid_layers.db")
+layers_prev_extend6 = optuna.load_study(study_name="grid_prev_new", storage="sqlite:////home/hofmanja/1HP_NN/grid_prev_new.db")
+layers_prev_extend7 = optuna.load_study(study_name="grid_prev", storage="sqlite:////home/hofmanja/1HP_NN/grid_prev.db")
+layers_prev_extend8 = optuna.load_study(study_name="grid", storage="sqlite:////home/hofmanja/1HP_NN/grid.db")
+layers_prev_extend11 =  optuna.load_study(study_name="grid_4_layers", storage="sqlite:////home/hofmanja/1HP_NN/grid_4_layers.db")
+layers_prev_extend10 =  optuna.load_study(study_name="grid_4_ly_new_loss", storage="sqlite:////home/hofmanja/1HP_NN/grid_4_ly_new_loss.db")
+studies = [layers_prev_extend, layers_prev_extend2, layers_prev_extend3, layers_prev_extend4, layers_prev_extend5, layers_prev_extend6, layers_prev_extend7, layers_prev_extend8,  layers_prev_extend10, layers_prev_extend11]
+ 
+#layers_prev_extend = remove_outliers(layers_prev_extend)
+plot_analysis_scatter()
 
-for trial in layers_prev_extend2.trials:
-    if trial.params["extend"] == 2 and trial.params["num_layers"] == 2 and trial.params["prev_boxes"] == 3:
-        print(trial.value)
-layers_prev_extend.add_trials(layers_prev_extend2.trials)    
-layers_prev_extend = remove_outliers(layers_prev_extend)
-plot_analysis()
+# storage = "sqlite:////home/hofmanja/1HP_NN/databases/second.db"
+# study = optuna.load_study(study_name="second", storage=storage)
+# study = trials_below(study, 1)
+# plot_slice(study)
+# # Get all study summaries
+# study_summaries = optuna.study.get_all_study_summaries(storage)
 
-storage = "sqlite:////home/hofmanja/1HP_NN/databases/second.db"
-
-# Get all study summaries
-study_summaries = optuna.study.get_all_study_summaries(storage)
-
-# Print the study summaries
-for summary in study_summaries:
-    print(summary)
+# # Print the study summaries
+# for summary in study_summaries:
+#     print(summary)
 
 
 # fig = optuna.visualization.plot_timeline(layers_prev_extend)

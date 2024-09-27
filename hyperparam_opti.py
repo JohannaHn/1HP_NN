@@ -29,7 +29,7 @@ def objective(trial):
     
     extend = trial.suggest_int("extend", 1,6)
     prev_boxes = trial.suggest_int("prev_boxes", 1,4)
-    num_layers = trial.suggest_int("num_layers", 3,3)
+    num_layers = trial.suggest_int("num_layers", 2,2)
     
     enc_depth = 4
     dec_depth = 4
@@ -113,7 +113,7 @@ if __name__ == "__main__":
     parser.add_argument("--dataset_raw", type=str, default="extend_plumes/ep_medium_1000dp_only_vary_dist", help="Name of the raw dataset (without inputs)")
     parser.add_argument("--dataset_prep", type=str, default="extend_plumes/ep_medium_1000dp_only_vary_dist inputs_ks")
     parser.add_argument("--device", type=str, default="cuda:0")
-    parser.add_argument("--epochs", type=int, default=60)
+    parser.add_argument("--epochs", type=int, default=80)
     parser.add_argument("--case", type=str, choices=["train", "test", "finetune"], default="train")
     parser.add_argument("--model", type=str, default="default") # required for testing or finetuning
     parser.add_argument("--destination", type=str, default="")
@@ -138,7 +138,7 @@ if __name__ == "__main__":
 
     search_space = {"prev_boxes": [1,2,3,4], "extend": [1,2,3,4,5,6]}
 
-    study_name = "grid_prev_new"  # Unique identifier of the study.
+    study_name = "grid_prev_new_loss"  # Unique identifier of the study.
     storage_name = "sqlite:///{}.db".format(study_name)
    # optuna.delete_study(study_name=study_name, storage=storage_name)
     study = optuna.create_study(direction="minimize", study_name=study_name, storage=storage_name, load_if_exists=True, sampler=optuna.samplers.GridSampler(search_space))

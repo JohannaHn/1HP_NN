@@ -147,7 +147,8 @@ class Solver(object):
         if log_val_epoch:
             file.close()
 
-        return val_loss / len(epochs)
+        # return val_loss / len(epochs)
+        return self.best_model_params["loss"]
     
     def plot_inputs_and_labels(self, inputs,label):
         """ plot examplary input and label"""
