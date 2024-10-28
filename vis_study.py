@@ -327,7 +327,8 @@ def plot_analysis():
 
 
     ax[1][0].set_xlabel("Extend Boxes")
-    ax[1][0].set_ylabel("Loss")
+    ax[1][0].set_ylabel("Validation loss")
+    
     ax[1][0].legend(loc='upper right')
     fig.savefig("/home/hofmanja/1HP_NN/plot_study2.png")
 
@@ -405,7 +406,7 @@ def plot_analysis_scatter():
 
     ax[0].set_ylim(0.00004, 0.000125)
     ax[0].set_xlabel("Predicted Frames (Dec length)")
-    ax[0].set_ylabel("Loss")
+    ax[0].set_ylabel("Validation loss")
     ax[0].legend(loc='upper right', bbox_to_anchor=(1,1))
 
     list1 = list(zip(extend_org, prev_boxes_org, values_org, num_layers_org))
@@ -456,15 +457,21 @@ def plot_analysis_scatter():
     x, y = zip(*mean_loss_dict.items())
     ax[1].scatter(x,y,s=40, marker='x', color=colors[3],label="Enc length 3")
     
-    ax[1].set_ylim(0, 0.00034)
+    ax[1].set_ylim(0, 0.0004)
     ax[1].set_xlabel("Predicted Frames (Dec length)")
-    ax[1].legend(loc='upper right', bbox_to_anchor=(1.45,1))
+    ax[1].set_ylabel("Validation loss")
+    ax[0].set_ylabel("Validation loss")
+    ax[1].legend(loc='upper right', bbox_to_anchor=(1,1))
+    ax[0].set_facecolor('#B0B0B0')
+    ax[1].set_facecolor('#B0B0B0')
+    ax[0].set_title("Influence of Layers")
+    ax[1].set_title("Influence of Encoder length")
 
     for axis in ax.flat:
         axis.ticklabel_format(axis='y', style='sci', scilimits=(0,0))
 
     fig.tight_layout()
-    plt.subplots_adjust(wspace=0.3)
+    plt.subplots_adjust(wspace=0.2)
     fig.savefig("/home/hofmanja/1HP_NN/plot_analysis_scatter.png", dpi=500)
 
 
@@ -492,11 +499,13 @@ def plot_slice(study):
 
         ax[0][0].scatter(trial.params["batch_size"], value, marker='x', s=15, color="blue", alpha=0.5)
         ax[0][0].set_xlabel("Batch size")
+        ax[0][0].set_ylabel("Validation loss")
         ax[0][0].set_xticks([16,32])
         ax[0][0].set_xlim(8,40)
         if trial.params["lr"] < 0.01:
             ax[0][1].scatter(trial.params["lr"], value, marker='x', s=15, color="blue", alpha=0.5)
         ax[0][1].set_xlabel("Learning rate")
+        
         ax[0][1].set_xticks([0.0002, 0.003])
         ax[0][1].set_xticklabels([r'$2 \cdot 10^{-4}$', r'$3 \cdot 10^{-3}$'])
         ax[0][2].scatter(trial.params["enc_depth"], value , marker='x', s=15, color="blue", alpha=0.5)
@@ -509,6 +518,7 @@ def plot_slice(study):
         ax[0][3].set_xlim(3.5, 6.5)
         ax[1][0].scatter(trial.params["init_features"], value,marker='x', s=15, color="blue", alpha=0.5)
         ax[1][0].set_xlabel("Initial features")
+        ax[1][0].set_ylabel("Validation loss")
         ax[1][0].set_xticks([16,32,64])
         ax[1][0].set_xlim(8,72)
         ax[1][1].scatter(trial.params["kernel_size"], value, marker='x', s=15, color="blue", alpha=0.5)
@@ -536,7 +546,7 @@ def plot_slice(study):
 
     fig.tight_layout()
     plt.subplots_adjust(wspace=0.1)
-    fig.savefig("/home/hofmanja/1HP_NN/plot_hyperparams.png", dpi=500)
+    fig.savefig("/home/hofmanja/1HP_NN/plot_hyperparams2.png", dpi=500)
 
 
 
@@ -574,7 +584,7 @@ plot_analysis_scatter()
 
 # storage = "sqlite:////home/hofmanja/1HP_NN/databases/second.db"
 # study = optuna.load_study(study_name="second", storage=storage)
-# study = trials_below(study, 1)
+# study = trials_below(study, 0.0008)
 # plot_slice(study)
 # # Get all study summaries
 # study_summaries = optuna.study.get_all_study_summaries(storage)
