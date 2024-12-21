@@ -1,3 +1,10 @@
+# visualization files
+visu_extend.py
+study_extend_layers.py
+study_extend_prev.py
+study_GridSearch.py
+study.py
+
 paths.yaml
 paths_sdf.yaml
 
@@ -79,10 +86,6 @@ MANIFEST
 #  before PyInstaller builds the exe, so as to inject date/other infos into it.
 *.manifest
 *.spec
-
-# Installer logs
-pip-log.txt
-pip-delete-this-directory.txt
 
 # Unit test / coverage reports
 htmlcov/
@@ -175,22 +178,9 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-#jobscripts
-.sh
-
-#databases
-.db
-
 #models
 .pt
 
 #
 /cnn_model
 
-#
-visu_extend.py
-visu_extend.py
-study_extend_layers.py
-study_extend_prev.py
-study_GridSearch.py
-study.py
