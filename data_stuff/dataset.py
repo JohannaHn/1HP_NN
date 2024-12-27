@@ -12,7 +12,20 @@ import re
 from data_stuff.transforms import NormalizeTransform
 
 class DatasetExtendConvLSTM(Dataset):
-    def __init__(self, path:str, prev_steps:int, extend:int, skip_per_dir:int, overfit:int):
+    def __init__(self, path:str, prev_steps:int, extend:int, skip_per_dir:int, overfit=0):
+        """
+        Initializes a Dataset for ConvLSTM training.
+
+        Args:
+            path (str): The directory path containing 'Inputs' and 'Labels' subdirectories with data files.
+            prev_steps (int): Number of previous boxes to include in each data sample.
+            extend (int): Number of boxes to predict (extension of the sequence).
+            skip_per_dir (int): Number of cells to skip between sampled data points.
+            overfit (int, optional): Determines whether the dataset is restricted to a small subset for overfitting.
+                - If overfit=0, the full dataset is used for training (no overfitting).
+                - If overfit>0, only the first `overfit` data samples are used, allowing for overfitting/debugging.
+                Defaults to 0.
+        """
         Dataset.__init__(self)
         self.path = pathlib.Path(path)
         self.info = self.__load_info()
