@@ -100,9 +100,9 @@ class DatasetExtendConvLSTM(Dataset):
         input_seq = torch.cat(input_slices, dim=1) # concatenates array elements to form a tensor
         temp_slices = torch.tensor_split(temp, self.total_nr_steps, axis=2)
         
-        output = torch.cat(temp_slices, dim=1)[:,-self.extend:].reshape(1, self.extend * self.nr_cells_per_box_in_one_dir, self.nr_cells_per_box_in_one_dir)
+        label = torch.cat(temp_slices, dim=1)[:,-self.extend:].reshape(1, self.extend * self.nr_cells_per_box_in_one_dir, self.nr_cells_per_box_in_one_dir)
 
-        return input_seq, output
+        return input_seq, label
 
     def idx_to_window(self, idx):
         run_id = idx // self.dp_per_run
