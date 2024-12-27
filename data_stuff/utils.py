@@ -18,99 +18,80 @@ def save_yaml(settings: Dict, path: str, name_file: str = "settings"):
 
 @dataclass
 class SettingsTraining:
-    def __init__(self,
-                 dataset_raw: str,
-                 inputs: str,
-                 device: str,
-                 epochs: int,
-                 prev_boxes: int,
-                 extend: int,
-                 destination: pathlib.Path = "",
-                 dataset_prep: str = "",
-                 case: str = "train",
-                 finetune: bool = False,
-                 model: str = None,
-                 test: bool = False,
-                 case_2hp: bool = False,
-                 visualize: bool = False,
-                 save_inference: bool = False,
-                 problem: str = "2stages",
-                 notes: str = "",
-                 skip_per_dir: int = 4,
-                 len_box: int = 640,
-                 net: str = "convLSTM",
-                 vis_entire_plume: bool = False,
-                 overfit: int = 0,
-                 num_layers: int = 1,
-                 loss: str = 'mse',
-                 activation: str = 'relu',
-                 enc_conv_features = [16, 32, 64, 64, 64],
-                 dec_conv_features = [64, 64, 64],
-                 enc_kernel_sizes = [7, 5, 5, 5, 5],
-                 dec_kernel_sizes = [5, 5, 7]):
+    dataset_raw: str
+    inputs: str
+    device: str
+    epochs: int
+    prev_boxes: int
+    extend: int
+    destination: pathlib.Path = pathlib.Path("")
+    dataset_prep: str = ""
+    case: str = "train"
+    finetune: bool = False
+    model: str = None
+    test: bool = False
+    case_2hp: bool = False
+    visualize: bool = False
+    save_inference: bool = False
+    problem: str = "2stages"
+    notes: str = ""
+    skip_per_dir: int = 4
+    len_box: int = 640
+    net: str = "convLSTM"
+    vis_entire_plume: bool = False
+    overfit: int = 0
+    num_layers: int = 1
+    loss: str = "mse"
+    activation: str = "relu"
+    enc_conv_features = [16, 32, 64, 64, 64]
+    dec_conv_features = [64, 64, 64]
+    enc_kernel_sizes = [7, 5, 5, 5, 5]
+    dec_kernel_sizes = [5, 5, 7]
+    overfit_str: str
 
-        self.dataset_raw = dataset_raw
-        self.inputs = inputs
-        self.device = device
-        self.epochs = epochs
-        self.prev_boxes = prev_boxes
-        self.extend = extend
-        self.destination = destination
-        self.dataset_prep = dataset_prep
-        self.case = case
-        self.finetune = finetune
-        self.model = model
-        self.test = test
-        self.case_2hp = case_2hp
-        self.visualize = visualize
-        self.save_inference = save_inference
-        self.problem = problem
-        self.notes = notes
-        self.skip_per_dir = skip_per_dir
-        self.len_box = len_box
-        self.net = net
-        self.vis_entire_plume = vis_entire_plume
-        self.overfit = overfit
-        self.num_layers = num_layers
-        self.loss = loss
-        self.activation = activation
-        self.enc_conv_features = enc_conv_features
-        self.dec_conv_features = dec_conv_features
-        self.enc_kernel_sizes = enc_kernel_sizes
-        self.dec_kernel_sizes = dec_kernel_sizes 
-    
-        if self.case in ["finetune", "finetuning", "Finetune", "Finetuning"]:
+    def __post_init__(self):
+        # Normalize the case field and set associated flags.
+        case_map = {
+            "finetune": ["finetune", "finetuning", "Finetune", "Finetuning"],
+            "test": ["test", "testing", "Test", "Testing", "TEST"],
+            "train": ["train", "training", "Train", "Training", "TRAIN"],
+        }
+        
+        if self.case in case_map["finetune"]:
             self.finetune = True
             self.case = "finetune"
-            assert self.model is not None, "Path to model is not defined"
-        elif self.case in ["test", "testing", "Test", "Testing", "TEST"]:
+            assert self.model is not None, "Path to model is not defined for finetuning"
+        elif self.case in case_map["test"]:
             self.case = "test"
             self.test = True
-            assert self.finetune is False, "Finetune is not possible in test mode"
-        elif self.case in ["train", "training", "Train", "Training", "TRAIN"]:
+            assert not self.finetune, "Finetune is not possible in test mode"
+        elif self.case in case_map["train"]:
             self.case = "train"
-            assert self.finetune is False, "Finetune is not possible in train mode"
-            assert self.test is False, "Test is not possible in train mode"
-
-        if self.case in ["test", "finetune"]:
-            assert self.model != "runs/default", "Please specify model path for testing or finetuning"
-
-        if self.overfit == 0:
-            self.overfit_str = ""
+            assert not self.finetune, "Finetune is not possible in train mode"
+            assert not self.test, "Test is not possible in train mode"
         else:
-            self.overfit_str = f' overfit_{self.overfit}'
+            raise ValueError(f"Invalid case: {self.case}")
 
-        if self.destination == "": 
-            self.destination = f"case_{self.case} prev_{self.prev_boxes} extend_{self.extend} skip_{self.skip_per_dir} loss_{self.loss} {self.num_layers}layers"
+        # Additional validation for test and finetune cases.
+        if self.case in ["test", "finetune"]:
+            assert self.model != "runs/default", "Please specify a valid model path for testing or finetuning"
 
-        
+        # Initialize overfit_str based on the overfit parameter.
+        self.overfit_str = f" overfit_{self.overfit}" if self.overfit else ""
+
+        # Set the default destination if none is provided.
+        if not self.destination:
+            self.destination = pathlib.Path(
+                f"case_{self.case} prev_{self.prev_boxes} extend_{self.extend} "
+                f"skip_{self.skip_per_dir} loss_{self.loss} layers_{self.num_layers}"
+            )       
 
     def save(self):
         save_yaml(self.__dict__, self.destination, "command_line_arguments")
         
     def make_destination_path(self, destination_dir: pathlib.Path):
         if self.destination == "":
-            self.destination = f"case_{self.case} prev_{self.prev_boxes} extend_{self.extend} skip_{self.skip_per_dir} loss_{self.loss} {self.num_layers}layers"
+            self.destination = f"case_{self.case} prev_{self.prev_boxes} extend_{self.extend} skip_{self.skip_per_dir} loss_{self.loss} layers_{self.num_layers}"
         self.destination = destination_dir / self.destination
         self.destination.mkdir(parents=True, exist_ok=True)
 
