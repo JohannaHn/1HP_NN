@@ -86,7 +86,7 @@ def objective(trial):
         solver.save_metrics(settings.destination, model.num_of_params(), settings.epochs, training_time, settings.device)
 
         dataloader = dataloaders["val"]
-        #visualizations_convLSTM(model, dataloaders['test'], settings.device, prev_boxes=settings.prev_boxes, extend=settings.extend, plot_path=settings.destination, dp_to_visu=1, pic_format='png')
+
     except Exception as e:
         loss = 1
         if isinstance(e, torch.cuda.OutOfMemoryError):
@@ -115,13 +115,12 @@ if __name__ == "__main__":
     parser.add_argument("--device", type=str, default="cuda:0")
     parser.add_argument("--epochs", type=int, default=80)
     parser.add_argument("--case", type=str, choices=["train", "test", "finetune"], default="train")
-    parser.add_argument("--model", type=str, default="default") # required for testing or finetuning
-    parser.add_argument("--destination", type=str, default="")
-    parser.add_argument("--inputs", type=str, default="ks") #choices=["gki", "gksi", "pksi", "gks", "gksi100", "ogksi1000", "gksi1000", "pksi100", "pksi1000", "ogksi1000_finetune", "gki100", "t", "gkiab", "gksiab", "gkt"]
-    parser.add_argument("--problem", type=str, choices=["2stages", "allin1", "extend1", "extend2",], default="extend_plumes")
-    parser.add_argument("--prev_boxes", type=int, default=1)
+    parser.add_argument("--model", type=str, default="default", help="Provide the model path which is required for testing.") 
+    parser.add_argument("--destination", type=str, default="",help="Customized target direcotry after 'test_nn/runs' for storing the model")
+    parser.add_argument("--inputs", type=str, default="ks", choices=["ks", "gki", "gksi", "gks"], help="Input parameters")
+    parser.add_argument("--problem", type=str, choices=["2stages", "allin1", "extend1", "extend2","extend_plumes"], default="extend_plumes")
+    parser.add_argument("--prev_boxes", type=int, default=1, help="Number of boxes used as input.")
     parser.add_argument("--extend", type=int, default=2)
-    parser.add_argument("--overfit", type=int, default=0)
     parser.add_argument("--num_layers", type=int, default=1)
     parser.add_argument("--loss", type=str, choices=['mse', 'l1'], default='mse')
     parser.add_argument("--enc_conv_features", default=[16, 32, 64, 64, 64])
