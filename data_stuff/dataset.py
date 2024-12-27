@@ -55,6 +55,7 @@ class DatasetExtendConvLSTM(Dataset):
         self.prev_steps = prev_steps
         self.box_len:int = (self.total_nr_steps) * self.spatial_size[1]
         self.skip_per_dir:int = skip_per_dir
+        self.nr_cells_per_box_in_one_dir = 64
         self.dp_per_run:int = (self.spatial_size[0] - self.box_len) // skip_per_dir +1
         self.overfit = overfit
 
@@ -91,7 +92,7 @@ class DatasetExtendConvLSTM(Dataset):
         input, temp = input.unsqueeze(1), temp.unsqueeze(1)
 
         # input temp is only left portion of the window
-        input_temp = torch.cat((temp[:,:,:self.prev_steps*64], torch.zeros([1,1, self.extend*64,64])), dim=2)
+        input_temp = torch.cat((temp[:,:,:self.prev_steps*self.nr_cells_per_box_in_one_dir], torch.zeros([1,1, self.extend*self.nr_cells_per_box_in_one_dir,self.nr_cells_per_box_in_one_dir])), dim=2)
 
         # slice inputs and temp
         input = torch.cat((input, input_temp), dim=0)
@@ -99,7 +100,7 @@ class DatasetExtendConvLSTM(Dataset):
         input_seq = torch.cat(input_slices, dim=1) # concatenates array elements to form a tensor
         temp_slices = torch.tensor_split(temp, self.total_nr_steps, axis=2)
         
-        output = torch.cat(temp_slices, dim=1)[:,-self.extend:].reshape(1, self.extend * 64, 64)
+        output = torch.cat(temp_slices, dim=1)[:,-self.extend:].reshape(1, self.extend * self.nr_cells_per_box_in_one_dir, self.nr_cells_per_box_in_one_dir)
 
         return input_seq, output
 
