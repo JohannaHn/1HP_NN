@@ -146,8 +146,6 @@ if __name__ == "__main__":
     parser.add_argument("--skip_per_dir", type=int, default=64)
     args = parser.parse_args()
     settings = SettingsTraining(**vars(args))
-    print(args.enc_conv_features)
-    print([8,16,32])
 
     settings = prepare_data_and_paths(settings)
 
