@@ -63,11 +63,7 @@ def measure_loss(model: UNet, dataloader: DataLoader, device: str, loss_func: mo
     mae_closs_last = 0.0
     count = 0.0
     
-        # for x,y in dataloader:# batchwise
-        #     x = x.to(device)
-        #     y = y.to(device)
-        #     y_pred = model(x).to(device)
-    for batch_id, (inputs, labels) in enumerate(dataloader): # batchwise
+    for batch_id, (inputs, labels) in enumerate(dataloader): 
         for dp_in_batch in range(dataloader.batch_size):
             datapoint_id = batch_id * dataloader.batch_size + dp_in_batch
             if benchmark == False or datapoint_id % dataloader.dataset.dataset.dp_per_run == 0:
