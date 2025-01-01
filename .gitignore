@@ -4,6 +4,8 @@ study_extend_layers.py
 study_extend_prev.py
 study_GridSearch.py
 study.py
+extend_plumes.py
+extend_plumes_v2 reduced to used stuff.py
 
 paths.yaml
 paths_sdf.yaml
