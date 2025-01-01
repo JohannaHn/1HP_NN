@@ -30,12 +30,7 @@ def init_data(settings: SettingsTraining):
 
     split_ratios = [0.7, 0.2, 0.1]
     
-    split1, split2, split3 = get_splits(len(dataset), split_ratios)
-    datasets = []
-
-    datasets.append(Subset(dataset, range(split3+split2,len(dataset))))
-    datasets.append(Subset(dataset, range(split3,split3+split2)))
-    datasets.append(Subset(dataset, range(split3)))
+    datasets = random_split(dataset, get_splits(len(dataset), split_ratios))
     dataloaders = {}
     torch.manual_seed(2809)
     try:
