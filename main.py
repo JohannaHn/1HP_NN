@@ -119,35 +119,6 @@ def run(settings: SettingsTraining):
 
     return model
 
-def save_inference(model_name:str, in_channels: int, settings: SettingsTraining):
-    # push all datapoints through and save all outputs
-    model = Seq2Seq(in_channels=in_channels, frame_size=(64,64), prev_boxes = settings.prev_boxes, extend=settings.extend, num_layers=settings.num_layers,
-    enc_conv_features=settings.enc_conv_features,
-    dec_conv_features=settings.dec_conv_features,
-    enc_kernel_sizes=settings.enc_kernel_sizes,
-    dec_kernel_sizes=settings.dec_kernel_sizes).float()
-    model.load(model_name, settings.device)
-    model.eval()
-
-    data_dir = settings.dataset_prep
-    input_dir = pathlib.Path(f'{data_dir}/Inputs')
-    output_dir = pathlib.Path(f'{data_dir}/Outputs')
-    output_dir.mkdir(parents=True, exist_ok=True)
-
-    for datapoint in input_dir.iterdir():
-        data = torch.load(datapoint)
-        data = torch.unsqueeze(data, 0)
-        print(f"Shape of data: {data.shape}")
-        time_start = time.perf_counter()
-        y_out = model(data.to(settings.device)).to(settings.device)
-        time_end = time.perf_counter()
-        y_out = y_out.detach().cpu()
-        y_out = torch.squeeze(y_out, 0)
-        torch.save(y_out, data_dir / "Outputs" / datapoint.name)
-        print(f"Inference of {datapoint.name} took {time_end-time_start} seconds")
-    
-    print(f"Inference finished, outputs saved in {data_dir / 'Outputs'}")
-
 if __name__ == "__main__":
     logging.basicConfig(level=logging.WARNING)
         
@@ -181,6 +152,3 @@ if __name__ == "__main__":
     settings = prepare_data_and_paths(settings)
 
     model = run(settings)
-
-    # if args.save_inference:
-    #     save_inference(settings.destination, len(args.inputs)+1, settings)
