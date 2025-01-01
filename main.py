@@ -64,7 +64,7 @@ def run(settings: SettingsTraining):
     if settings.case in ["train", "finetune"]:
         if settings.loss == 'mse':
             loss_fn = MSELoss()
-        if settings.loss == 'l1':
+        elif settings.loss == 'l1':
             loss_fn = L1Loss()
 
         # training
@@ -90,7 +90,7 @@ def run(settings: SettingsTraining):
 
     # number of model parameters
     num_param = sum(p.numel() for p in model.parameters())
-    print(f"Number of parameters: {num_param}")
+    print(f"Number of model parameters: {num_param}")
 
     # visualization
     which_dataset = "val"
