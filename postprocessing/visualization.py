@@ -97,7 +97,7 @@ def visualizations(model: UNet, dataloader: DataLoader, device: str, prev_boxes:
                 y = torch.cat((x[-1][:prev_boxes].reshape(prev_boxes*64,64), y.squeeze()), dim=0)
                 y_out = torch.cat((x[-1][:prev_boxes].reshape(prev_boxes*64,64), y_out.squeeze()), dim=0)
                 y_out_it = torch.cat((x[-1][:prev_boxes].reshape(prev_boxes*64,64), y_out_it.squeeze()), dim=0)
-                dict_to_plot = prepare_data_to_plot_convLSTM(x, y.squeeze(), y_out.squeeze(), y_out_it.squeeze(), info, prev_boxes, extend)
+                dict_to_plot = prepare_data_to_plot(x, y.squeeze(), y_out.squeeze(), y_out_it.squeeze(), info, prev_boxes, extend)
 
                 plot_datafields(dict_to_plot, name_pic, settings_pic)
                 printed += 1
@@ -108,9 +108,6 @@ def visualizations(model: UNet, dataloader: DataLoader, device: str, prev_boxes:
             
 
 def reverse_norm_one_dp(x: torch.Tensor, y: torch.Tensor, y_out:torch.Tensor, norm: NormalizeTransform):
-    # reverse transform for plotting real values
-    #x_split = torch.split(x, 1, 1)
-    #x = torch.cat(x_split[:4], dim=1)
     x1 = norm.reverse(x[0][:4].detach().cpu(), "Inputs")
     x2 = norm.reverse(x[0][-1].detach().cpu().unsqueeze(0), "Labels")
     x = torch.cat((x1,x2),dim=0)
@@ -122,7 +119,7 @@ def reverse_norm_one_dp(x: torch.Tensor, y: torch.Tensor, y_out:torch.Tensor, no
 
     return x, y, y_out
 
-def prepare_data_to_plot_convLSTM(x: torch.Tensor, y: torch.Tensor, y_out:torch.Tensor, y_out_it:torch.Tensor, info: dict, prev_boxes:int, extend:int):
+def prepare_data_to_plot(x: torch.Tensor, y: torch.Tensor, y_out:torch.Tensor, y_out_it:torch.Tensor, info: dict, prev_boxes:int, extend:int):
     length = 64 * (prev_boxes + extend)
     length_temp = 64*prev_boxes
     length_pred = 64*extend
@@ -149,24 +146,6 @@ def prepare_data_to_plot_convLSTM(x: torch.Tensor, y: torch.Tensor, y_out:torch.
         "t_out_it": DataToVisualize(y_out_it, "Iterative prediction: Temperature in [°C]",(0,length_unrolled,64,0), {"vmax": temp_max, "vmin": temp_min}),
          "error": DataToVisualize(torch.abs(y-y_out), "Error",(0,length,64,0), {"vmin": 0, "vmax": 2}),
     }
-
-    return dict_to_plot
-
-def prepare_data_to_plot(x: torch.Tensor, y: torch.Tensor, y_out:torch.Tensor, info: dict):
-    # prepare data of temperature true, temperature out, error, physical variables (inputs)
-    temp_max = max(y.max(), y_out.max())
-    temp_min = min(y.min(), y_out.min())
-    extent_highs = (np.array(info["CellsSize"][:2]) * x.shape[-2:])
-
-    dict_to_plot = {
-        "t_true": DataToVisualize(y, "Label: Temperature in [°C]", extent_highs, {"vmax": temp_max, "vmin": temp_min}),
-        "t_out": DataToVisualize(y_out, "Prediction: Temperature in [°C]", extent_highs, {"vmax": temp_max, "vmin": temp_min}),
-        "error": DataToVisualize(torch.abs(y-y_out), "Absolute error in [°C]", extent_highs),
-    }
-    inputs = info["Inputs"].keys()
-    for input in inputs:
-        index = info["Inputs"][input]["index"]
-        dict_to_plot[input] = DataToVisualize(x[index], input, extent_highs)
 
     return dict_to_plot
 
