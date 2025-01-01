@@ -117,7 +117,7 @@ def measure_loss(model: UNet, dataloader: DataLoader, device: str, loss_func: mo
             "mean squared error in last frame in [°C^2]": mse_closs_last,
             "mean absolute error in last frame in [°C]": mae_closs_last}
 
-def save_all_measurements(settings:SettingsTraining, dataset, times, solver:Solver=None, errors:Dict={}):
+def save_all_measurements(settings:SettingsTraining, len_dataset, times, solver:Solver=None, errors:Dict={}):
     with open(Path.cwd() / "runs" / settings.destination / f"measurements_{settings.case}.yaml", "w") as f:
         for key, value in times.items():
             f.write(f"{key}: {value}\n")
@@ -131,7 +131,7 @@ def save_all_measurements(settings:SettingsTraining, dataset, times, solver:Solv
         f.write(f"dataset location: {settings.dataset_prep.parent}\n")
         f.write(f"dataset name: {settings.dataset_raw}\n")
         f.write(f"case: {settings.case}\n")
-        f.write(f"number of test datapoints: {len(dataset.dataset)}\n")
+        f.write(f"number of test datapoints: {len_dataset}\n")
         f.write(f"name_destination_folder: {settings.destination}\n")
         f.write(f"number epochs: {settings.epochs}\n")
 

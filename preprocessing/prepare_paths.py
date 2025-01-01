@@ -32,7 +32,7 @@ def set_paths_1hpnn(dataset_name: str, inputs:str = "", dataset_prep:str = "", p
     default_raw_dir = pathlib.Path(paths["default_raw_dir"])
     destination_dir = pathlib.Path(paths["models"])
     datasets_prepared_dir = pathlib.Path(paths["datasets_prepared_dir"])
-    #default_raw_dir, destination_dir, datasets_prepared_dir = extend_paths_for_problem(problem, default_raw_dir, destination_dir, datasets_prepared_dir, dataset_name)
+    default_raw_dir, destination_dir, datasets_prepared_dir = extend_paths_for_problem(problem, default_raw_dir, destination_dir, datasets_prepared_dir, dataset_name)
 
     dataset_raw_path = default_raw_dir / dataset_name
     if dataset_prep == "":
@@ -90,7 +90,7 @@ def extend_paths_for_problem(problem:str, default_raw_dir: pathlib.Path, destina
         if problem == "extend1":
             destination_dir = destination_dir / "extend_plumes1"
         else:
-            destination_dir = destination_dir / "extend_plumes2" / dataset_name
+            destination_dir = destination_dir / "extend_plumes2"
     elif problem == "allin1":
         default_raw_dir = default_raw_dir / "giant_manyhps"
         destination_dir = destination_dir / "allin1"

@@ -33,7 +33,6 @@ class DataToVisualize:
     cmap: str = "hot"
 
     def __post_init__(self):
-        #extent = (,int(self.extent_highs[0]),int(self.extent_highs[1]),0)
 
         self.imshowargs.update({"cmap": self.cmap, 
                            "extent": self.extent_highs})
@@ -57,38 +56,8 @@ class DataToVisualize:
         elif self.name == "SDF":
             self.name = "SDF-transformed position in [-]"
     
-def visualizations(model: UNet, dataloader: DataLoader, device: str, amount_datapoints_to_visu: int = inf, plot_path: str = "default", pic_format: str = "png"):
-    print("Visualizing...", end="\r")
 
-    if amount_datapoints_to_visu > len(dataloader.dataset):
-        amount_datapoints_to_visu = len(dataloader.dataset)
-
-    norm = dataloader.dataset.dataset.norm
-    info = dataloader.dataset.dataset.info
-    model.eval()
-    settings_pic = {"format": pic_format,
-                    "dpi": 600,}
-
-    current_id = 0
-    for inputs, labels in dataloader:
-        len_batch = inputs.shape[0]
-        for datapoint_id in range(len_batch):
-            name_pic = f"{plot_path}_{current_id/18+899}"
-
-            x = torch.unsqueeze(inputs[datapoint_id].to(device), 0)
-            y = labels[datapoint_id]
-            y_out = model(x).to(device)
-
-            x, y, y_out = reverse_norm_one_dp(x, y, y_out, norm)
-            dict_to_plot = prepare_data_to_plot(x, y, y_out, info)
-
-            plot_datafields(dict_to_plot, name_pic, settings_pic)
-
-            if current_id >= amount_datapoints_to_visu-1:
-                return None
-            current_id += 1
-
-def visualizations_convLSTM(model: UNet, dataloader: DataLoader, device: str, prev_boxes:int, extend:int, dp_to_visu: np.array = inf, plot_path: str = "default", pic_format: str = "png"):
+def visualizations(model: UNet, dataloader: DataLoader, device: str, prev_boxes:int, extend:int, dp_to_visu: np.array = inf, plot_path: str = "default", pic_format: str = "png"):
     print("Visualizing...", end="\r")
 
     norm = dataloader.dataset.dataset.norm

@@ -18,7 +18,7 @@ from networks.unetHalfPad import UNetHalfPad
 from networks.convLSTM import Seq2Seq
 from processing.solver import Solver
 from preprocessing.prepare import prepare_data_and_paths
-from postprocessing.visualization import plot_avg_error_cellwise, visualizations, infer_all_and_summed_pic, visualizations_convLSTM
+from postprocessing.visualization import plot_avg_error_cellwise, visualizations, infer_all_and_summed_pic
 from postprocessing.measurements import measure_loss, save_all_measurements
 
 def init_data(settings: SettingsTraining):
@@ -107,9 +107,9 @@ def run(settings: SettingsTraining):
         benchmark = True
         which_dataset = "test"
     errors = measure_loss(model, dataloaders[which_dataset], device="cuda:0", benchmark=benchmark)
-    save_all_measurements(settings, dataloaders[which_dataset], times, solver, errors)
+    save_all_measurements(settings, len(dataloaders[which_dataset].dataset), times, solver, errors)
     if settings.visualize:
-        visualizations_convLSTM(model, dataloaders['test'], settings.device, prev_boxes=settings.prev_boxes, extend=settings.extend, plot_path=settings.destination, dp_to_visu=dp_to_visu, pic_format=pic_format)
+        visualizations(model, dataloaders['test'], settings.device, prev_boxes=settings.prev_boxes, extend=settings.extend, plot_path=settings.destination, dp_to_visu=dp_to_visu, pic_format=pic_format)
         #times[f"avg_inference_time of {which_dataset}"], summed_error_pic = infer_all_and_summed_pic(model, dataloaders[which_dataset], settings.device)
         #plot_avg_error_cellwise(dataloaders[which_dataset], summed_error_pic, {"folder" : settings.destination, "format": pic_format})
             

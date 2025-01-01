@@ -243,9 +243,7 @@ class Seq2Seq(nn.Module):
                 padding=(dec_kernel_sizes[-1] - 1) // 2,  # Correct padding for 'same'
                 bias=True
             )
-        )       
-
-        
+        )          
 
     def forward(self, X):
 

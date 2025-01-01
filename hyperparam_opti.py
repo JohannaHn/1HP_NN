@@ -20,7 +20,7 @@ from data_stuff.utils import SettingsTraining
 from networks.convLSTM import Seq2Seq
 from processing.solver import Solver
 from preprocessing.prepare import prepare_data_and_paths
-from postprocessing.visualization import plot_avg_error_cellwise, visualizations, infer_all_and_summed_pic, visualizations_convLSTM
+from postprocessing.visualization import plot_avg_error_cellwise, visualizations, infer_all_and_summed_pic
 from postprocessing.measurements import measure_loss, save_all_measurements, measure_losses_paper24
 
 def objective(trial):

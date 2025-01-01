@@ -27,10 +27,11 @@ runs/
 
 # exclude testing notebook files and other random files
 *.ipynb
-3D_FCN.code-workspace
+*.code-workspace
 old/
 OLD/
 postprocessing/paper23/plots_paper_old?/
+
 
 # interim files
 events.out.*
