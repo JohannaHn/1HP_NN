@@ -24,6 +24,7 @@ class SettingsTraining:
     epochs: int
     prev_boxes: int
     extend: int
+    overfit_str: str
     destination: pathlib.Path = pathlib.Path("")
     dataset_prep: str = ""
     case: str = "train"
@@ -47,7 +48,6 @@ class SettingsTraining:
     dec_conv_features = [64, 64, 64]
     enc_kernel_sizes = [7, 5, 5, 5, 5]
     dec_kernel_sizes = [5, 5, 7]
-    overfit_str: str
 
     def __post_init__(self):
         # Normalize the case field and set associated flags.
