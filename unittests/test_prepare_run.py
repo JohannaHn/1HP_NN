@@ -2,6 +2,7 @@ import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../")))
 
+from pathlib import Path
 import unittest
 from unittest.mock import MagicMock, patch
 from preprocessing.prepare import prepare_data_and_paths
@@ -21,9 +22,9 @@ class TestPrepareDataAndPaths(unittest.TestCase):
         mock_settings.epochs = 1
         mock_settings.case = "train"
         mock_settings.model = "default"
-        mock_settings.destination = "software_testing"
+        mock_settings.destination = Path("/home/hofmanja/test_nn/runs/software_test")
         mock_settings.inputs = "ks"
-        mock_settings.problem = "extend_plumes"
+        mock_settings.problem = "extend1"
         mock_settings.prev_boxes = 1
         mock_settings.extend = 2
         mock_settings.overfit = 0
@@ -36,12 +37,13 @@ class TestPrepareDataAndPaths(unittest.TestCase):
         mock_settings.activation = "relu"
         mock_settings.notes = None
         mock_settings.skip_per_dir = 64
+        mock_settings.case_2hp = False
 
         # Act
         settings = prepare_data_and_paths(mock_settings)
 
         # Assert
-        self.assertIsInstance(settings, SettingsTraining)
+        self.assertTrue(settings.dataset_prep.exists())
 
 class TestRun(unittest.TestCase):
 
@@ -54,9 +56,9 @@ class TestRun(unittest.TestCase):
         mock_settings.epochs = 1
         mock_settings.case = "train"
         mock_settings.model = "default"
-        mock_settings.destination = "software_testing"
+        mock_settings.destination = Path("/home/hofmanja/test_nn/runs/software_test")
         mock_settings.inputs = "ks"
-        mock_settings.problem = "extend_plumes"
+        mock_settings.problem = "extend1"
         mock_settings.prev_boxes = 1
         mock_settings.extend = 2
         mock_settings.overfit = 0
@@ -68,9 +70,12 @@ class TestRun(unittest.TestCase):
         mock_settings.dec_kernel_sizes = [5, 5, 5, 5]
         mock_settings.activation = "relu"
         mock_settings.notes = None
-        mock_settings.skip_per_dir = 64
+        mock_settings.skip_per_dir = 64        
+        mock_settings.case_2hp = False
 
-        model = run(mock_settings)
+        settings = prepare_data_and_paths(mock_settings)
+
+        model = run(settings)
 
         # Assertions
         self.assertIsInstance(model, Seq2Seq)

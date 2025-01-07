@@ -25,7 +25,7 @@ class SettingsTraining:
     prev_boxes: int
     extend: int
     overfit_str: str
-    destination: pathlib.Path = pathlib.Path("")
+    destination: pathlib.Path = ""
     dataset_prep: str = ""
     case: str = "train"
     finetune: bool = False

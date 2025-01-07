@@ -10,10 +10,7 @@ def prepare_data_and_paths(settings:SettingsTraining):
     else:
         paths: Paths1HP
         paths, destination_dir = set_paths_1hpnn(settings.dataset_raw, settings.inputs, settings.dataset_prep, problem=settings.problem) 
-        print(f"Settings.dataset_prep: {settings.dataset_prep}")
         settings.dataset_prep = paths.dataset_1st_prep_path
-        print(f"Settings.dataset_prep: {settings.dataset_prep}")
-
 
         settings.make_destination_path(destination_dir)
         settings.save_notes()
