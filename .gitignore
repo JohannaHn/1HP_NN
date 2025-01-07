@@ -1,5 +1,6 @@
 paths.yaml
 paths_sdf.yaml
+.code-workspace
 
 #bash scripts
 *.sh

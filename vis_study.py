@@ -330,7 +330,7 @@ def plot_analysis():
     ax[1][0].set_ylabel("Validation loss")
     
     ax[1][0].legend(loc='upper right')
-    fig.savefig("/home/hofmanja/1HP_NN/plot_study2.png")
+    fig.savefig("/home/hofmanja/1HP_NN/plot_study.png")
 
 
 def plot_analysis_scatter():
@@ -546,56 +546,15 @@ def plot_slice(study):
 
     fig.tight_layout()
     plt.subplots_adjust(wspace=0.1)
-    fig.savefig("/home/hofmanja/1HP_NN/plot_hyperparams2.png", dpi=500)
+    fig.savefig("/home/hofmanja/1HP_NN/plot_hyperparams.png", dpi=500)
 
 
-
-
-# db_path = "/home/hofmanja/1HP_NN/databases/second.db"  # Use os.path.join to construct the full path
-# name_without_extension = "second"  # Get the name without extension
-# storage_url = f"sqlite:///{db_path}" 
-# study = optuna.load_study(study_name=name_without_extension, storage=storage_url)
-# print(study.best_params)
-        
-# studies = []
-# for db in database_names:
-#     if db in ["layers_prev_extend_without_pruned.db"]:
-#         db_path = os.path.join(databases, db)  # Use os.path.join to construct the full path
-#         name_without_extension = os.path.splitext(db)[0]  # Get the name without extension
-#         storage_url = f"sqlite:///{db_path}"
-#         study = optuna.load_study(study_name=name_without_extension, storage=storage_url)
-#         studies.append(study)
-
-
-layers_prev_extend = optuna.load_study(study_name="layers_prev_extend_without_pruned", storage="sqlite:////home/hofmanja/1HP_NN/study/layers_prev_extend_without_pruned.db")
-layers_prev_extend2 = optuna.load_study(study_name="layers_prev_extend", storage="sqlite:////home/hofmanja/1HP_NN/study/layers_prev_extend.db")
-layers_prev_extend3 = optuna.load_study(study_name="grid_layers_new", storage="sqlite:////home/hofmanja/1HP_NN/grid_layers_new.db")
-layers_prev_extend4 = optuna.load_study(study_name="grid_layers_new2", storage="sqlite:////home/hofmanja/1HP_NN/grid_layers_new2.db")
-layers_prev_extend5 = optuna.load_study(study_name="grid_layers", storage="sqlite:////home/hofmanja/1HP_NN/grid_layers.db")
-layers_prev_extend6 = optuna.load_study(study_name="grid_prev_new", storage="sqlite:////home/hofmanja/1HP_NN/grid_prev_new.db")
-layers_prev_extend7 = optuna.load_study(study_name="grid_prev", storage="sqlite:////home/hofmanja/1HP_NN/grid_prev.db")
-layers_prev_extend8 = optuna.load_study(study_name="grid", storage="sqlite:////home/hofmanja/1HP_NN/grid.db")
-layers_prev_extend11 =  optuna.load_study(study_name="grid_4_layers", storage="sqlite:////home/hofmanja/1HP_NN/grid_4_layers.db")
-layers_prev_extend10 =  optuna.load_study(study_name="grid_4_ly_new_loss", storage="sqlite:////home/hofmanja/1HP_NN/grid_4_ly_new_loss.db")
-studies = [layers_prev_extend, layers_prev_extend2, layers_prev_extend3, layers_prev_extend4, layers_prev_extend5, layers_prev_extend6, layers_prev_extend7, layers_prev_extend8,  layers_prev_extend10, layers_prev_extend11]
+study = optuna.load_study(study_name="study", storage="sqlite:///path_to_study/study.db")
+studies = [study]
  
-#layers_prev_extend = remove_outliers(layers_prev_extend)
 plot_analysis_scatter()
 
-# storage = "sqlite:////home/hofmanja/1HP_NN/databases/second.db"
-# study = optuna.load_study(study_name="second", storage=storage)
-# study = trials_below(study, 0.0008)
-# plot_slice(study)
-# # Get all study summaries
-# study_summaries = optuna.study.get_all_study_summaries(storage)
+plot_analysis()
 
-# # Print the study summaries
-# for summary in study_summaries:
-#     print(summary)
+fig = optuna.visualization.plot_timeline(study)
 
-
-# fig = optuna.visualization.plot_timeline(layers_prev_extend)
-# fig = optuna.visualization.plot_timeline(layers_prev_extend)
-# fig.show()
-# fig = optuna.visualization.plot_slice(layers_prev_extend)
-# fig.show()
